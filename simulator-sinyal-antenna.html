@@ -1,0 +1,1465 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SkyFlux Signal Simulator · FPV Antenna RF Lab</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 50 50'><circle cx='25' cy='25' r='22' fill='none' stroke='%2337f0a0' stroke-width='2'/><circle cx='20' cy='25' r='3' fill='%2334dffb'/><path d='M26 17.6 A10 10 0 0 1 26 32.4' fill='none' stroke='%2337f0a0' stroke-width='2.4'/><path d='M29.4 14.6 A14 14 0 0 1 29.4 35.4' fill='none' stroke='%2334dffb' stroke-width='2.4'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#05090b;
+    --bg2:#070d10;
+    --panel:#0b1418;
+    --panel2:#0e1b20;
+    --line:rgba(80,255,180,.10);
+    --line2:rgba(80,255,180,.22);
+    --ink:#d7ffee;
+    --ink-dim:#6f9488;
+    --acc:#37f0a0;      /* link green */
+    --cyan:#34dffb;     /* signal */
+    --amber:#ffc14d;    /* warn */
+    --red:#ff5d6c;      /* loss / bad */
+    --violet:#b388ff;
+    --shadow:0 18px 50px -20px rgba(0,0,0,.9);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;height:100%}
+  body{
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(52,223,251,.06), transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, rgba(55,240,160,.07), transparent 55%),
+      var(--bg);
+    color:var(--ink);
+    font-family:'JetBrains Mono',ui-monospace,monospace;
+    -webkit-font-smoothing:antialiased;
+  }
+  .app{max-width:1640px;margin:0 auto;padding:22px 24px 40px}
+
+  /* Header */
+  header.top{
+    display:flex;align-items:center;gap:18px;flex-wrap:wrap;
+    border:1px solid var(--line2);border-radius:16px;
+    padding:14px 18px;margin-bottom:18px;
+    background:linear-gradient(180deg,var(--panel2),var(--panel));
+    box-shadow:var(--shadow);position:relative;overflow:hidden;
+  }
+  header.top::before{
+    content:"";position:absolute;inset:0;
+    background:repeating-linear-gradient(90deg,transparent 0 38px,rgba(55,240,160,.04) 38px 39px);
+    pointer-events:none;
+  }
+  /* ===== SkyFlux brand ===== */
+  .brand{display:flex;align-items:center;gap:14px}
+  .brandmark{position:relative;width:52px;height:52px;border-radius:50%;flex:none;
+    display:grid;place-items:center;
+    background:radial-gradient(circle at 50% 45%,rgba(52,223,251,.12),rgba(5,12,12,.35) 72%);
+    border:1px solid var(--line2);overflow:hidden;
+    box-shadow:0 0 24px -6px rgba(52,223,251,.55), inset 0 0 16px -7px rgba(55,240,160,.7)}
+  .brandmark::after{content:"";position:absolute;inset:-35%;
+    background:conic-gradient(from 0deg,transparent 0 58%,rgba(55,240,160,.32) 78%,rgba(52,223,251,.5) 87%,transparent 93%);
+    animation:sweep 3.8s linear infinite;mix-blend-mode:screen;pointer-events:none}
+  @keyframes sweep{to{transform:rotate(360deg)}}
+  .emblem{position:relative;width:52px;height:52px;z-index:2;
+    filter:drop-shadow(0 0 4px rgba(52,223,251,.55))}
+  .emblem .ring{fill:none;stroke:rgba(120,255,210,.30);stroke-width:1}
+  .emblem .core{fill:url(#fluxG)}
+  .emblem .arc{fill:none;stroke:url(#fluxG);stroke-width:2.1;stroke-linecap:round;
+    transform-box:view-box;transform-origin:20px 25px;animation:emit 2.4s ease-out infinite}
+  .emblem .a1{animation-delay:0s}
+  .emblem .a2{animation-delay:.45s}
+  .emblem .a3{animation-delay:.9s}
+  @keyframes emit{0%{opacity:0;transform:scale(.55)}28%{opacity:1}100%{opacity:0;transform:scale(1.14)}}
+  @media(prefers-reduced-motion:reduce){.brandmark::after,.emblem .arc{animation:none}.emblem .arc{opacity:.85}}
+
+  .wordmark{font-family:'Chakra Petch',sans-serif;font-weight:700;letter-spacing:1.5px;
+    font-size:26px;line-height:.9;display:flex}
+  .wordmark .sky{color:var(--ink);text-shadow:0 0 18px rgba(215,255,238,.18)}
+  .wordmark .flx{background:linear-gradient(95deg,var(--acc),var(--cyan));
+    -webkit-background-clip:text;background-clip:text;color:transparent;
+    text-shadow:0 0 20px rgba(55,240,160,.35)}
+  .brand .sub{font-family:'JetBrains Mono';font-weight:500;
+    font-size:9.5px;letter-spacing:3.2px;color:var(--ink-dim);margin-top:8px;
+    display:flex;align-items:center;gap:8px}
+  .brand .sub .led{width:6px;height:6px;border-radius:50%;background:var(--acc);
+    box-shadow:0 0 10px 1px var(--acc);animation:pulse 1.6s infinite;flex:none}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+
+  .tagline{color:var(--ink-dim);font-size:12px;max-width:360px;line-height:1.55;
+    padding-left:18px;border-left:1px solid var(--line2)}
+  .tagline b{color:var(--ink)}
+  .live{margin-left:auto;display:flex;align-items:center;gap:10px;font-size:11px;
+    letter-spacing:2px;color:var(--acc);border:1px solid var(--line2);
+    padding:8px 12px;border-radius:999px;background:rgba(55,240,160,.05)}
+  .live .bars{display:flex;gap:2px;align-items:flex-end;height:14px}
+  .live .bars i{width:3px;background:var(--acc);border-radius:1px;opacity:.85}
+
+  /* Language toggle */
+  .langtog{display:flex;gap:4px;border:1px solid var(--line2);border-radius:999px;
+    padding:3px;background:rgba(255,255,255,.03)}
+  .langtog button{font-family:'JetBrains Mono';font-size:11px;font-weight:600;letter-spacing:1px;
+    cursor:pointer;color:var(--ink-dim);background:transparent;border:none;padding:5px 11px;
+    border-radius:999px;transition:.15s}
+  .langtog button:hover{color:var(--ink)}
+  .langtog button.on{background:var(--acc);color:#04120c}
+
+  /* Docs link */
+  .doclink{display:inline-flex;align-items:center;gap:7px;font-family:'Chakra Petch',sans-serif;
+    font-size:12px;font-weight:600;letter-spacing:.6px;text-decoration:none;color:var(--ink);
+    border:1px solid var(--line2);border-radius:999px;padding:7px 14px;
+    background:rgba(55,240,160,.06);transition:.15s;white-space:nowrap}
+  .doclink:hover{background:rgba(55,240,160,.16);border-color:var(--acc);color:var(--ink);transform:translateY(-1px)}
+  .doclink .bk{font-size:14px;line-height:1}
+
+  /* Beginner help icons + tooltip */
+  .help{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;
+    border-radius:50%;border:1px solid var(--line2);color:var(--ink-dim);font-size:9px;font-weight:700;
+    cursor:help;flex:none;user-select:none;font-family:'JetBrains Mono';line-height:1;transition:.15s}
+  .help:hover,.help:focus,.help.show{color:#04120c;background:var(--acc);border-color:var(--acc);outline:none}
+  #tipBubble{position:absolute;z-index:200;max-width:262px;
+    background:linear-gradient(180deg,#0e1b20,#0b1418);border:1px solid var(--acc);
+    border-radius:10px;padding:10px 12px;font-size:11px;line-height:1.55;color:var(--ink);
+    font-family:'JetBrains Mono';letter-spacing:.2px;text-align:left;
+    box-shadow:0 16px 38px -14px #000, 0 0 0 1px rgba(55,240,160,.08);
+    opacity:0;transform:translateY(4px);transition:opacity .14s ease,transform .14s ease;pointer-events:none}
+  #tipBubble.show{opacity:1;transform:translateY(0)}
+
+  /* Layout — 3-column cockpit: live arena framed by control columns */
+  .grid{
+    display:grid;
+    grid-template-columns:330px minmax(0,1fr) 350px;
+    grid-template-areas:"left stage right";
+    gap:16px;align-items:start;
+  }
+  .col{display:flex;flex-direction:column;gap:13px;min-width:0}
+  .col.left{grid-area:left}
+  .col.right{grid-area:right}
+
+  .stage{
+    grid-area:stage;position:sticky;top:16px;
+    border:1px solid var(--line2);border-radius:16px;overflow:hidden;
+    background:linear-gradient(180deg,#06100e,#040a0c);box-shadow:var(--shadow);
+    height:clamp(520px,82vh,900px);
+  }
+
+  /* tablet: arena spans the top, controls split into two columns below */
+  @media(max-width:1240px){
+    .grid{grid-template-columns:1fr 1fr;
+      grid-template-areas:"stage stage" "left right"}
+    .stage{position:static;height:clamp(440px,60vh,640px)}
+  }
+  /* phone: single stacked column */
+  @media(max-width:760px){
+    .grid{grid-template-columns:1fr;
+      grid-template-areas:"stage" "left" "right"}
+    .stage{height:clamp(380px,54vh,560px)}
+  }
+  #arena{display:block;width:100%;height:100%;cursor:grab}
+  #arena:active{cursor:grabbing}
+
+  /* Picture-in-picture goggles feed */
+  .pip{position:absolute;top:14px;left:14px;width:236px;height:150px;
+    border:1px solid var(--line2);border-radius:10px;overflow:hidden;
+    box-shadow:0 10px 30px -10px #000, inset 0 0 0 1px rgba(0,0,0,.4);background:#000}
+  .pip canvas{display:block;width:236px;height:150px}
+  .pip .tag{position:absolute;top:6px;left:8px;font-size:9px;letter-spacing:2px;
+    color:var(--acc);text-shadow:0 0 6px rgba(0,0,0,.9);font-weight:600}
+
+  /* HUD margin/LQ */
+  .hud{position:absolute;top:14px;right:14px;text-align:right;
+    background:linear-gradient(180deg,rgba(8,18,16,.85),rgba(6,12,12,.7));
+    border:1px solid var(--line2);border-radius:12px;padding:12px 14px;min-width:150px;
+    backdrop-filter:blur(4px)}
+  .hud .lbl{font-size:9.5px;letter-spacing:2px;color:var(--ink-dim)}
+  .hud .big{font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:30px;line-height:1.05}
+  .hud .sub{font-size:11px;color:var(--ink-dim);margin-top:2px}
+  .hud .status{margin-top:8px;font-size:11px;letter-spacing:2px;font-weight:600}
+
+  .hint{position:absolute;bottom:12px;left:14px;font-size:10.5px;color:var(--ink-dim);
+    background:rgba(5,10,10,.6);border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+
+  /* Control cards */
+  .card{border:1px solid var(--line2);border-radius:16px;background:
+    linear-gradient(180deg,var(--panel2),var(--panel));box-shadow:var(--shadow);padding:13px 14px}
+  .card h3{font-family:'Chakra Petch',sans-serif;font-weight:600;letter-spacing:1px;
+    margin:0 0 4px;font-size:13.5px;display:flex;align-items:center;gap:9px;text-transform:uppercase}
+  .card h3 .pin{width:8px;height:8px;border-radius:2px;transform:rotate(45deg)}
+  .card .desc{font-size:11px;color:var(--ink-dim);margin:0 0 9px;line-height:1.5}
+
+  .presets{display:flex;flex-wrap:wrap;gap:7px}
+  .presets button{font-family:'JetBrains Mono';font-size:11px;cursor:pointer;
+    color:var(--ink);background:rgba(55,240,160,.06);border:1px solid var(--line2);
+    padding:7px 10px;border-radius:9px;transition:.15s;letter-spacing:.3px}
+  .presets button:hover{background:rgba(55,240,160,.16);border-color:var(--acc);transform:translateY(-1px)}
+  .presets button.active{background:var(--acc);color:#04120c;border-color:var(--acc);font-weight:700}
+
+  .ctrl{margin:9px 0}
+  .ctrl .row{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px}
+  .ctrl label{font-size:11.5px;color:var(--ink);letter-spacing:.3px}
+  .ctrl .val{font-size:12px;color:var(--cyan);font-weight:600}
+  .ctrl .val small{color:var(--ink-dim);font-weight:400}
+  input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:5px;border-radius:3px;
+    background:linear-gradient(90deg,var(--acc) 0%,var(--acc) var(--p,50%),rgba(255,255,255,.09) var(--p,50%));
+    outline:none;cursor:pointer}
+  input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;
+    background:#eafff6;border:3px solid var(--acc);box-shadow:0 0 10px rgba(55,240,160,.6);cursor:grab}
+  input[type=range]::-moz-range-thumb{width:14px;height:14px;border-radius:50%;background:#eafff6;
+    border:3px solid var(--acc);box-shadow:0 0 10px rgba(55,240,160,.6);cursor:grab}
+
+  .seg{display:flex;gap:6px}
+  .seg button{flex:1;font-family:'JetBrains Mono';font-size:11px;cursor:pointer;color:var(--ink-dim);
+    background:rgba(255,255,255,.03);border:1px solid var(--line2);padding:7px 4px;border-radius:8px;transition:.15s}
+  .seg button.on{background:rgba(52,223,251,.14);color:var(--cyan);border-color:var(--cyan);font-weight:700}
+  .seg.warn button.on{background:rgba(255,93,108,.14);color:var(--red);border-color:var(--red)}
+
+  .toggles{display:flex;gap:8px;flex-wrap:wrap;margin-top:4px}
+  .tog{flex:1;min-width:120px;display:flex;align-items:center;justify-content:space-between;gap:8px;
+    font-size:11px;border:1px solid var(--line2);border-radius:9px;padding:8px 10px;cursor:pointer;
+    background:rgba(255,255,255,.02);user-select:none}
+  .tog .sw{width:34px;height:18px;border-radius:999px;background:rgba(255,255,255,.12);position:relative;transition:.18s}
+  .tog .sw::after{content:"";position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;
+    background:#cfe;transition:.18s}
+  .tog.on .sw{background:var(--acc)}
+  .tog.on .sw::after{left:18px;background:#04120c}
+
+  /* sub-section + system badges */
+  .subhead{font-size:9px;letter-spacing:2.5px;color:var(--ink-dim);text-transform:uppercase;
+    margin:11px 0 4px;display:flex;align-items:center;gap:8px}
+  .subhead::after{content:"";flex:1;height:1px;background:var(--line)}
+  .seg.sys button.on{background:rgba(179,136,255,.16);color:var(--violet);border-color:var(--violet)}
+  .hud .sysbadge{display:inline-block;margin-top:6px;font-size:9px;letter-spacing:1.5px;
+    color:var(--violet);border:1px solid rgba(179,136,255,.4);border-radius:6px;padding:2px 7px}
+  .bd .line.head b{color:var(--ink-dim)}
+  .bd .sect{font-size:9px;letter-spacing:2px;color:var(--ink-dim);text-transform:uppercase;
+    margin:8px 0 2px;opacity:.8}
+
+  /* Breakdown */
+  .bd{font-size:11.5px}
+  .bd .line{display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px dashed var(--line)}
+  .bd .line span:first-child{color:var(--ink-dim)}
+  .bd .line b{font-weight:600;color:var(--ink)}
+  .bd .line.pos b{color:var(--acc)}
+  .bd .line.neg b{color:var(--red)}
+  .bd .total{margin-top:8px;display:flex;justify-content:space-between;align-items:center;
+    border-top:1px solid var(--line2);padding-top:9px}
+  .bd .total .k{font-size:11px;color:var(--ink-dim);letter-spacing:1px}
+  .bd .total .v{font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:20px}
+
+  .note{font-size:10.5px;color:var(--ink-dim);line-height:1.6;margin-top:4px}
+  .note b{color:var(--amber)}
+  .legend{display:flex;gap:14px;flex-wrap:wrap;font-size:10.5px;color:var(--ink-dim);margin-top:8px}
+  .legend i{display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:5px;vertical-align:middle}
+  footer{margin-top:18px;font-size:10.5px;color:var(--ink-dim);line-height:1.7;
+    border-top:1px solid var(--line);padding-top:14px}
+  .disclaimer{margin-top:10px;font-size:10px;color:var(--ink-dim);line-height:1.65;
+    border:1px solid var(--line);border-radius:10px;padding:9px 12px;
+    background:rgba(255,193,77,.04)}
+  .disclaimer b{color:var(--amber)}
+  a{color:var(--cyan);text-decoration:none}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header class="top">
+    <div class="brand">
+      <div class="brandmark" aria-hidden="true">
+        <svg class="emblem" viewBox="0 0 50 50">
+          <defs>
+            <linearGradient id="fluxG" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#34dffb"/>
+              <stop offset="1" stop-color="#37f0a0"/>
+            </linearGradient>
+          </defs>
+          <circle class="ring" cx="25" cy="25" r="22"/>
+          <circle class="core" cx="20" cy="25" r="2.6"/>
+          <path class="arc a1" d="M24.0 20.5 A 6 6 0 0 1 24.0 29.5"/>
+          <path class="arc a2" d="M26.7 17.6 A 10 10 0 0 1 26.7 32.4"/>
+          <path class="arc a3" d="M29.4 14.6 A 14 14 0 0 1 29.4 35.4"/>
+        </svg>
+      </div>
+      <div>
+        <div class="wordmark"><span class="sky">SKY</span><span class="flx">FLUX</span></div>
+        <div class="sub"><span class="led"></span>SIGNAL SIMULATOR · 5.8&nbsp;GHz RF&nbsp;LAB</div>
+      </div>
+    </div>
+    <div class="tagline" data-i18n-html="tagline">Simulasi link video 5.8&nbsp;GHz antara <b>drone</b> dan <b>goggles</b>. Ubah gain, efisiensi, SWR, polarisasi &amp; bandwidth — lihat langsung pengaruhnya ke pola radiasi, jarak, dan kualitas video.</div>
+    <div class="live"><span>LINK</span>
+      <span class="bars" id="liveBars"><i style="height:5px"></i><i style="height:8px"></i><i style="height:11px"></i><i style="height:14px"></i></span>
+    </div>
+    <a class="doclink" href="dokumentasi.html"><span class="bk">📖</span><span data-i18n="doc_link">Panduan</span></a>
+    <div class="langtog" id="langTog">
+      <button data-lang="id">ID</button>
+      <button data-lang="en">EN</button>
+    </div>
+  </header>
+
+  <div class="grid">
+    <!-- CENTER: live RF arena (sticky) -->
+    <div class="stage">
+      <canvas id="arena"></canvas>
+      <div class="pip">
+        <canvas id="feed" width="236" height="150"></canvas>
+        <div class="tag">● GOGGLES FEED</div>
+      </div>
+      <div class="hud">
+        <div class="lbl">LINK MARGIN</div>
+        <div class="big" id="hudMargin">--</div>
+        <div class="sub" id="hudRssi">RSSI -- dBm</div>
+        <div class="status" id="hudStatus">—</div>
+      </div>
+      <div class="hint" data-i18n="hint_drag">🖱️ Seret drone untuk ubah jarak &amp; sudut elevasi</div>
+    </div>
+
+    <!-- LEFT controls: radio gear — drone antenna, video system, goggles antenna -->
+    <div class="col left">
+
+      <div class="card">
+        <h3><span class="pin" style="background:var(--acc)"></span><span data-i18n="card_presets">Preset Antenna Drone (VTX)</span></h3>
+        <p class="desc" data-i18n="desc_presets">Muat spesifikasi resmi dari 5 antenna yang dibandingkan. Nilai efisiensi bertanda * adalah estimasi (tidak dipublikasikan resmi oleh pabrikan).</p>
+        <div class="presets" id="presets"></div>
+      </div>
+
+      <div class="card">
+        <h3><span class="pin" style="background:var(--acc)"></span><span data-i18n="card_tx">Antenna Drone · TX</span></h3>
+        <p class="desc" data-i18n="desc_tx">Antena pemancar di drone yang menyiarkan video. Atur fokus pancaran (gain), efisiensi, kecocokan (SWR), dan rentang frekuensinya.</p>
+        <div id="txCtrls"></div>
+        <div class="row" style="display:flex;align-items:center;gap:7px;margin-top:10px">
+          <label style="font-size:11.5px" data-i18n="lbl_txpol">Polarisasi TX</label>
+          <span class="help" data-tip="tip_pol" tabindex="0">?</span>
+        </div>
+        <div class="seg" id="txPol"></div>
+      </div>
+
+      <div class="card">
+        <h3><span class="pin" style="background:var(--violet)"></span><span data-i18n="card_video">Sistem Video</span></h3>
+        <p class="desc" data-i18n-html="desc_video">Tiap sistem punya ambang SNR &amp; lebar kanal berbeda — analog luwes tapi “bersemut”, digital tajam tapi punya <b>cliff</b> (tiba-tiba freeze saat SNR jatuh).</p>
+        <div class="seg sys" id="videoSeg"></div>
+      </div>
+
+      <div class="card">
+        <h3><span class="pin" style="background:var(--cyan)"></span><span data-i18n="card_rx">Antenna Goggles · RX</span></h3>
+        <p class="desc" data-i18n="desc_rx">Antena penerima di goggles. Umumnya dua: omni untuk segala arah + patch untuk jarak jauh. Diversity memilih/menggabungkannya.</p>
+        <div class="subhead"><span data-i18n="sub_omni">Antenna utama (omni)</span><span class="help" data-tip="tip_sub_omni" tabindex="0">?</span></div>
+        <div id="rxCtrls"></div>
+        <div class="row" style="display:flex;align-items:center;gap:7px;margin-top:8px">
+          <label style="font-size:11.5px" data-i18n="lbl_omnipol">Polarisasi omni</label>
+          <span class="help" data-tip="tip_pol" tabindex="0">?</span>
+        </div>
+        <div class="seg warn" id="rxPol"></div>
+
+        <div class="subhead"><span data-i18n="sub_patch">Antenna kedua (patch · directional)</span><span class="help" data-tip="tip_sub_patch" tabindex="0">?</span></div>
+        <div id="rx2Ctrls"></div>
+        <div class="row" style="display:flex;align-items:center;gap:7px;margin-top:8px">
+          <label style="font-size:11.5px" data-i18n="lbl_patchpol">Polarisasi patch</label>
+          <span class="help" data-tip="tip_pol" tabindex="0">?</span>
+        </div>
+        <div class="seg warn" id="rx2Pol"></div>
+
+        <div class="subhead"><span data-i18n="sub_div">Diversity combiner</span><span class="help" data-tip="tip_div" tabindex="0">?</span></div>
+        <div class="seg sys" id="divSeg"></div>
+        <div class="toggles">
+          <div class="tog on" id="togPatch"><span style="display:flex;align-items:center;gap:6px"><span data-i18n="tog_patch">Aktifkan patch</span><span class="help" data-tip="tip_patch_toggle" tabindex="0">?</span></span><span class="sw"></span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3><span class="pin" style="background:var(--red)"></span><span data-i18n="card_install">Instalasi &amp; Loss</span></h3>
+        <p class="desc" data-i18n="desc_install">Loss yang sering bikin pusing di lapangan: kabel/U.FL panjang, antena dekat karbon/baterai, atau konektor jelek.</p>
+        <div id="installCtrls"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT controls: field conditions & link-budget result -->
+    <div class="col right">
+
+      <div class="card">
+        <h3><span class="pin" style="background:var(--amber)"></span><span data-i18n="card_env">Lingkungan, Multipath &amp; Noise</span></h3>
+        <p class="desc" data-i18n="desc_env">Kondisi lapangan &amp; gangguan yang dialami sinyal: jarak, sudut, halangan, pantulan, dan interferensi.</p>
+        <div class="presets" id="envPresets" style="margin-bottom:10px"></div>
+        <div class="subhead"><span data-i18n="sub_geo">Geometri</span><span class="help" data-tip="tip_sub_geo" tabindex="0">?</span></div>
+        <div id="envCtrls"></div>
+        <div class="subhead"><span data-i18n="sub_envint">Lingkungan &amp; interferensi</span><span class="help" data-tip="tip_sub_envint" tabindex="0">?</span></div>
+        <div id="envExtra"></div>
+        <div class="toggles">
+          <div class="tog on" id="togGround"><span style="display:flex;align-items:center;gap:6px"><span data-i18n="tog_ground">Pantulan tanah</span><span class="help" data-tip="tip_ground" tabindex="0">?</span></span><span class="sw"></span></div>
+          <div class="tog" id="togBody"><span style="display:flex;align-items:center;gap:6px"><span data-i18n="tog_body">Body shadow</span><span class="help" data-tip="tip_body" tabindex="0">?</span></span><span class="sw"></span></div>
+        </div>
+        <div class="toggles">
+          <div class="tog on" id="togOrbit"><span style="display:flex;align-items:center;gap:6px"><span data-i18n="tog_orbit">Auto-orbit drone</span><span class="help" data-tip="tip_orbit" tabindex="0">?</span></span><span class="sw"></span></div>
+          <div class="tog" id="togRoll"><span style="display:flex;align-items:center;gap:6px"><span data-i18n="tog_roll">Auto-roll (manuver)</span><span class="help" data-tip="tip_roll" tabindex="0">?</span></span><span class="sw"></span></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3><span class="pin" style="background:var(--red)"></span><span data-i18n="card_budget">Link Budget · Rincian Loss</span></h3>
+        <div class="bd" id="breakdown"></div>
+        <div class="legend">
+          <span><i style="background:var(--acc)"></i><span data-i18n="leg_strong">kuat</span></span>
+          <span><i style="background:var(--amber)"></i><span data-i18n="leg_marginal">marginal</span></span>
+          <span><i style="background:var(--red)"></i><span data-i18n="leg_lost">putus</span></span>
+          <span><i style="background:var(--cyan)"></i><span data-i18n="leg_wave">gelombang sinyal</span></span>
+        </div>
+        <p class="note" data-i18n-html="note_budget"><b>Catatan:</b> model edukatif yang kini menghitung <b>SINR</b> (noise floor + interferensi), <b>multipath</b> (two-ray + fading), redaman environment/obstacle/foliage/body, <b>diversity</b> goggles, install loss, dan karakter sistem video. Angka mutlak tetap perkiraan, tapi <b>tren antar-parameter</b> mencerminkan fisika nyata: setiap +3&nbsp;dB ≈ 2× daya.</p>
+      </div>
+
+    </div>
+  </div>
+
+  <footer data-i18n-html="footer_read">
+    <b style="color:var(--ink)">Cara membaca:</b> Gain = arah fokus energi (pola donat) · Efisiensi = % daya yang benar-benar terpancar (sisanya jadi panas) · SWR = daya yang dipantulkan balik · Polarisasi = LHCP/RHCP harus cocok (mismatch ≈ −25&nbsp;dB) · Bandwidth = rentang frekuensi sehat antenna · <b style="color:var(--ink)">SINR</b> = sinyal vs (noise+interferensi), penentu kualitas video digital · <b style="color:var(--ink)">Multipath</b> = pantulan tanah/objek bikin sinyal naik-turun · <b style="color:var(--ink)">Diversity</b> = goggles memilih/menggabung 2 antena. &nbsp; Sumber spec antenna: situs resmi iFlight, TrueRC, GEPRC, Sequre, Foxeer. Prinsip RF (FSPL, two-ray, diversity): panduan Oscar Liang &amp; ExpressLRS.
+  </footer>
+  <div class="disclaimer" data-i18n-html="disclaimer">
+    <b>⚠ Disclaimer:</b> SkyFlux adalah alat edukasi &amp; simulasi. Hasil perhitungan merupakan estimasi berbasis model RF yang disederhanakan dan dapat berbeda dari kondisi terbang nyata (cuaca, medan, regulasi daya/frekuensi, perangkat). Bukan jaminan performa, bukan saran teknis resmi, dan tidak berafiliasi dengan merek antena/video mana pun. Gunakan sebagai bahan belajar — selalu patuhi regulasi frekuensi &amp; daya yang berlaku di wilayah Anda dan terbang dengan aman.
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ============================================================
+   I18N · Bahasa Indonesia / English
+============================================================ */
+let LANG = (typeof localStorage!=='undefined' && localStorage.getItem('sf_lang')) || 'id';
+const I18N = {
+  id: {
+    tagline: `Simulasi link video 5.8&nbsp;GHz antara <b>drone</b> dan <b>goggles</b>. Ubah gain, efisiensi, SWR, polarisasi &amp; bandwidth — lihat langsung pengaruhnya ke pola radiasi, jarak, dan kualitas video.`,
+    hint_drag: "🖱️ Seret drone untuk ubah jarak & sudut elevasi",
+    doc_link: "Panduan",
+    card_presets: "Preset Antenna Drone (VTX)",
+    desc_presets: "Muat spesifikasi resmi dari 5 antenna yang dibandingkan. Nilai efisiensi bertanda * adalah estimasi (tidak dipublikasikan resmi oleh pabrikan).",
+    card_tx: "Antenna Drone · TX",
+    lbl_txpol: "Polarisasi TX",
+    card_video: "Sistem Video",
+    desc_video: `Tiap sistem punya ambang SNR &amp; lebar kanal berbeda — analog luwes tapi “bersemut”, digital tajam tapi punya <b>cliff</b> (tiba-tiba freeze saat SNR jatuh).`,
+    card_rx: "Antenna Goggles · RX",
+    sub_omni: "Antenna utama (omni)",
+    lbl_omnipol: "Polarisasi omni",
+    sub_patch: "Antenna kedua (patch · directional)",
+    lbl_patchpol: "Polarisasi patch",
+    sub_div: "Diversity combiner",
+    tog_patch: "Aktifkan patch",
+    card_env: "Lingkungan, Multipath & Noise",
+    sub_geo: "Geometri",
+    sub_envint: "Lingkungan & interferensi",
+    tog_ground: "Pantulan tanah",
+    tog_body: "Body shadow",
+    tog_orbit: "Auto-orbit drone",
+    tog_roll: "Auto-roll (manuver)",
+    card_install: "Instalasi & Loss",
+    desc_install: "Loss yang sering bikin pusing di lapangan: kabel/U.FL panjang, antena dekat karbon/baterai, atau konektor jelek.",
+    card_budget: "Link Budget · Rincian Loss",
+    leg_strong: "kuat", leg_marginal: "marginal", leg_lost: "putus", leg_wave: "gelombang sinyal",
+    note_budget: `<b>Catatan:</b> model edukatif yang kini menghitung <b>SINR</b> (noise floor + interferensi), <b>multipath</b> (two-ray + fading), redaman environment/obstacle/foliage/body, <b>diversity</b> goggles, install loss, dan karakter sistem video. Angka mutlak tetap perkiraan, tapi <b>tren antar-parameter</b> mencerminkan fisika nyata: setiap +3&nbsp;dB ≈ 2× daya.`,
+    footer_read: `<b style="color:var(--ink)">Cara membaca:</b> Gain = arah fokus energi (pola donat) · Efisiensi = % daya yang benar-benar terpancar (sisanya jadi panas) · SWR = daya yang dipantulkan balik · Polarisasi = LHCP/RHCP harus cocok (mismatch ≈ −25&nbsp;dB) · Bandwidth = rentang frekuensi sehat antenna · <b style="color:var(--ink)">SINR</b> = sinyal vs (noise+interferensi), penentu kualitas video digital · <b style="color:var(--ink)">Multipath</b> = pantulan tanah/objek bikin sinyal naik-turun · <b style="color:var(--ink)">Diversity</b> = goggles memilih/menggabung 2 antena. &nbsp; Sumber spec antenna: situs resmi iFlight, TrueRC, GEPRC, Sequre, Foxeer. Prinsip RF (FSPL, two-ray, diversity): panduan Oscar Liang &amp; ExpressLRS.`,
+    disclaimer: `<b>⚠ Disclaimer:</b> SkyFlux adalah alat edukasi &amp; simulasi. Hasil perhitungan merupakan estimasi berbasis model RF yang disederhanakan dan dapat berbeda dari kondisi terbang nyata (cuaca, medan, regulasi daya/frekuensi, perangkat). Bukan jaminan performa, bukan saran teknis resmi, dan tidak berafiliasi dengan merek antena/video mana pun. Gunakan sebagai bahan belajar — selalu patuhi regulasi frekuensi &amp; daya yang berlaku di wilayah Anda dan terbang dengan aman.`,
+    tx_gain:"Gain", tx_gain_h:"1–3 ideal utk omni",
+    eff_rad:"Efisiensi radiasi", eff80:"≥80% bagus",
+    swr:"SWR / VSWR", swr_h:"<1.5 bagus",
+    freq_center:"Freq tengah", bw:"Bandwidth",
+    rx_gain_h:"goggle patch boleh tinggi",
+    vtx_power:"Daya VTX",
+    op_freq:"Frekuensi kerja (channel)",
+    drone_dist:"Jarak drone",
+    drone_elev:"Elevasi drone (atas horizon)", elev_h:"90°=tepat di atas pilot",
+    drone_tilt:"Tilt/roll antenna drone", tilt_h:"manuver memiringkan antenna",
+    patch_gain:"Gain patch", patch_gain_h:"directional, fokus ke depan",
+    patch_eff:"Efisiensi patch",
+    foliage:"Foliage / vegetasi", foliage_h:"pohon/daun basah",
+    obstacle:"Obstacle (knife-edge)", obstacle_h:"bukit/gedung",
+    mp_sev:"Multipath severity", mp_h:"pantulan & fading",
+    interf:"Interferensi (in-channel)", interf_h:"wifi/pilot lain",
+    nf:"Noise figure RX", nf_h:"makin kecil makin sensitif",
+    inst_txcable:"Kabel/U.FL TX",
+    inst_carbon:"Karbon dekat antenna TX", carbon_h:"detune/serap",
+    inst_rxcable:"Kabel/U.FL RX",
+    env_open:"Sawah / Open Field", env_urban:"Urban Multipath", env_trees:"Balik Pohon",
+    env_bounce:"Low Ground-Bounce", env_body:"Body Shadow", env_valley:"Mountain LOS",
+    bdl_ptx:"Daya VTX", bdl_gtx:"Gain TX", bdl_patt:"Pola TX (orientasi)", bdl_txeff:"Efisiensi TX",
+    bdl_txswr:"SWR TX", bdl_txoff:"Off-band TX", bdl_txinst:"Install TX (kabel/karbon)",
+    bdl_foliage:"Foliage / vegetasi", bdl_obstacle:"Obstacle (knife-edge)", bdl_body:"Body shadow",
+    bdl_tworay:"Multipath (two-ray)", bdl_fspl:"Path loss (FSPL)", bdl_grx:"Gain RX (aktif)",
+    bdl_rxpatt:"Pola RX (patch)", bdl_pol:"Polarisasi", bdl_fade:"Fading (sesaat)",
+    bdl_divg:"Diversity gain", bdl_prx:"Sinyal diterima (Prx)", bdl_ni:"Noise + interferensi",
+    st_prime:"◉ LINK PRIMA", st_stable:"◉ STABIL", st_marginal:"◐ MARGINAL", st_lost:"◯ PUTUS",
+    desc_tx:"Antena pemancar di drone yang menyiarkan video. Atur fokus pancaran (gain), efisiensi, kecocokan (SWR), dan rentang frekuensinya.",
+    desc_rx:"Antena penerima di goggles. Umumnya dua: omni untuk segala arah + patch untuk jarak jauh. Diversity memilih/menggabungkannya.",
+    desc_env:"Kondisi lapangan & gangguan yang dialami sinyal: jarak, sudut, halangan, pantulan, dan interferensi.",
+    freq_center_h:"titik tersehat antena", bw_h:"makin lebar makin aman",
+    vtx_power_h:"makin besar makin jauh", op_freq_h:"channel video kamu",
+    txcable_h:"pendekkan kalau bisa", rxcable_h:"pendekkan kalau bisa",
+    tip_gain:"Seberapa fokus energi antena ke satu arah. Gain tinggi = jangkauan jauh tapi area sempit; rendah = menyebar rata. Omni drone ideal 1–3 dBi.",
+    tip_eff:"Persen daya yang benar-benar terpancar jadi gelombang; sisanya jadi panas. ≥80% bagus. Antena murah/rusak bisa di bawah 60%.",
+    tip_swr:"Seberapa cocok antena dengan radio. SWR 1.0 sempurna; makin tinggi makin banyak daya memantul balik & bikin panas. Usahakan di bawah 1.5.",
+    tip_freq:"Frekuensi di mana antena paling sehat. Idealnya dekat channel yang kamu pakai (mis. 5.8 GHz).",
+    tip_bw:"Rentang frekuensi di mana antena masih bagus. Makin lebar, makin toleran kalau channel jauh dari freq tengah.",
+    tip_power:"Kekuatan pemancar video (mW). Makin besar makin jauh, tapi boros baterai & bisa melanggar aturan. Tiap 2× daya ≈ +3 dB.",
+    tip_opfreq:"Channel/frekuensi yang sedang dipakai mengirim video. Sebaiknya dekat freq tengah antena agar tidak rugi.",
+    tip_dist:"Jarak drone dari pilot. Makin jauh sinyal makin lemah (hukum kuadrat jarak). Menyeret drone di arena juga mengubah ini.",
+    tip_elev:"Sudut drone di atas garis horizon. 0°=sejajar mata, 90°=tepat di atas kepala. Mempengaruhi pola antena & pantulan tanah.",
+    tip_tilt:"Kemiringan antena drone saat manuver. Antena miring bikin polarisasi tak sejajar & sinyal bisa turun.",
+    tip_patchgain:"Fokus antena patch. Gain tinggi = jangkauan sangat jauh tapi sudutnya makin sempit, harus tepat mengarah ke drone.",
+    tip_foliage:"Redaman dari pepohonan/daun (apalagi basah). 5.8 GHz mudah diserap dedaunan, jadi sinyal turun lumayan.",
+    tip_obstacle:"Penghalang keras seperti bukit/gedung di jalur sinyal (knife-edge). Memotong sebagian gelombang yang lewat tepinya.",
+    tip_multipath:"Seberapa parah pantulan sinyal dari tanah/objek. Pantulan bisa menguatkan atau menghapus sinyal asli → sinyal naik-turun (fading).",
+    tip_interf:"Gangguan sinyal lain di channel yang sama (WiFi, pilot lain). Makin tinggi (mis. -90 dBm), makin susah sinyal kita menonjol.",
+    tip_nf:"Seberapa berisik penerima goggles itu sendiri. Makin kecil (dB) makin sensitif menangkap sinyal lemah.",
+    tip_cable:"Rugi sinyal di kabel/U.FL antara radio & antena. Makin panjang/jelek makin rugi. Pendekkan & pakai kabel bagus.",
+    tip_carbon:"Frame karbon/baterai dekat antena menyerap & merusak tuning (detune). Beri jarak dari antena.",
+    tip_pol:"Arah putaran gelombang. TX & RX harus sama (LHCP-LHCP atau RHCP-RHCP). Beda arah → sinyal anjlok ~25 dB. Linear = netral tapi rugi 3 dB ke CP.",
+    tip_div:"Cara goggles memakai 2 antena. OFF = 1 antena. SEL = pilih yang terkuat. MRC = gabung keduanya (paling bagus, +1–3 dB).",
+    tip_patch_toggle:"Nyalakan antena patch (directional) sebagai antena kedua. Bagus untuk jarak jauh saat drone ada di depan.",
+    tip_ground:"Sinyal memantul dari tanah lalu bertemu sinyal langsung. Bisa menguatkan (+6 dB) atau saling menghapus tergantung jarak/ketinggian.",
+    tip_body:"Tubuh pilot menghalangi antena saat drone terbang rendah di belakang. Bisa memotong ~10 dB. Putar badan untuk menghindarinya.",
+    tip_orbit:"Drone bergerak otomatis (jarak & sudut berubah-ubah) supaya kamu lihat efeknya tanpa menyeret manual.",
+    tip_roll:"Drone otomatis memiringkan badan (simulasi manuver/roll) agar terlihat efek tilt antena ke sinyal.",
+    tip_sub_omni:"Antena omni menerima dari segala arah — andalan saat drone di samping, belakang, atau dekat.",
+    tip_sub_patch:"Antena patch fokus ke satu arah (depan). Jangkauan jauh, tapi harus diarahkan ke drone.",
+    tip_sub_geo:"Posisi drone terhadap pilot: daya pancar, channel, jarak, ketinggian/sudut, dan kemiringan antena.",
+    tip_sub_envint:"Penghalang & gangguan: pepohonan, gedung, pantulan (multipath), interferensi WiFi/pilot lain, dan sensitivitas penerima.",
+  },
+  en: {
+    tagline: `5.8&nbsp;GHz video-link simulation between a <b>drone</b> and <b>goggles</b>. Tweak gain, efficiency, SWR, polarization &amp; bandwidth — see the live impact on radiation pattern, range, and video quality.`,
+    hint_drag: "🖱️ Drag the drone to change range & elevation angle",
+    doc_link: "Guide",
+    card_presets: "Drone Antenna Presets (VTX)",
+    desc_presets: "Load official specs from the 5 compared antennas. Efficiency values marked * are estimates (not officially published by the manufacturer).",
+    card_tx: "Drone Antenna · TX",
+    lbl_txpol: "TX polarization",
+    card_video: "Video System",
+    desc_video: `Each system has a different SNR threshold &amp; channel width — analog is forgiving but “snowy”, digital is sharp but has a <b>cliff</b> (sudden freeze when SNR drops).`,
+    card_rx: "Goggles Antenna · RX",
+    sub_omni: "Main antenna (omni)",
+    lbl_omnipol: "Omni polarization",
+    sub_patch: "Second antenna (patch · directional)",
+    lbl_patchpol: "Patch polarization",
+    sub_div: "Diversity combiner",
+    tog_patch: "Enable patch",
+    card_env: "Environment, Multipath & Noise",
+    sub_geo: "Geometry",
+    sub_envint: "Environment & interference",
+    tog_ground: "Ground reflection",
+    tog_body: "Body shadow",
+    tog_orbit: "Auto-orbit drone",
+    tog_roll: "Auto-roll (maneuver)",
+    card_install: "Installation & Loss",
+    desc_install: "Losses that often cause field headaches: long cable/U.FL, antenna near carbon/battery, or poor connectors.",
+    card_budget: "Link Budget · Loss Breakdown",
+    leg_strong: "strong", leg_marginal: "marginal", leg_lost: "lost", leg_wave: "signal wave",
+    note_budget: `<b>Note:</b> an educational model that now computes <b>SINR</b> (noise floor + interference), <b>multipath</b> (two-ray + fading), environment/obstacle/foliage/body attenuation, goggles <b>diversity</b>, install loss, and video-system character. Absolute numbers are still estimates, but the <b>trends between parameters</b> reflect real physics: every +3&nbsp;dB ≈ 2× power.`,
+    footer_read: `<b style="color:var(--ink)">How to read:</b> Gain = direction energy is focused (donut pattern) · Efficiency = % of power actually radiated (the rest becomes heat) · SWR = power reflected back · Polarization = LHCP/RHCP must match (mismatch ≈ −25&nbsp;dB) · Bandwidth = the antenna's healthy frequency range · <b style="color:var(--ink)">SINR</b> = signal vs (noise+interference), the key to digital video quality · <b style="color:var(--ink)">Multipath</b> = ground/object reflections make the signal rise and fall · <b style="color:var(--ink)">Diversity</b> = goggles select/combine 2 antennas. &nbsp; Antenna spec sources: official iFlight, TrueRC, GEPRC, Sequre, Foxeer sites. RF principles (FSPL, two-ray, diversity): Oscar Liang &amp; ExpressLRS guides.`,
+    disclaimer: `<b>⚠ Disclaimer:</b> SkyFlux is an educational &amp; simulation tool. Its calculations are estimates based on a simplified RF model and may differ from real-world flight conditions (weather, terrain, power/frequency regulations, hardware). It is not a performance guarantee, not official technical advice, and not affiliated with any antenna/video brand. Use it for learning — always comply with the frequency &amp; power regulations in your region and fly safely.`,
+    tx_gain:"Gain", tx_gain_h:"1–3 ideal for omni",
+    eff_rad:"Radiation efficiency", eff80:"≥80% good",
+    swr:"SWR / VSWR", swr_h:"<1.5 good",
+    freq_center:"Center freq", bw:"Bandwidth",
+    rx_gain_h:"goggle patch can be high",
+    vtx_power:"VTX power",
+    op_freq:"Operating freq (channel)",
+    drone_dist:"Drone range",
+    drone_elev:"Drone elevation (above horizon)", elev_h:"90°=directly above pilot",
+    drone_tilt:"Drone antenna tilt/roll", tilt_h:"maneuver tilts the antenna",
+    patch_gain:"Patch gain", patch_gain_h:"directional, focused forward",
+    patch_eff:"Patch efficiency",
+    foliage:"Foliage / vegetation", foliage_h:"trees/wet leaves",
+    obstacle:"Obstacle (knife-edge)", obstacle_h:"hill/building",
+    mp_sev:"Multipath severity", mp_h:"reflections & fading",
+    interf:"Interference (in-channel)", interf_h:"wifi/other pilots",
+    nf:"RX noise figure", nf_h:"lower = more sensitive",
+    inst_txcable:"TX cable/U.FL",
+    inst_carbon:"Carbon near TX antenna", carbon_h:"detune/absorb",
+    inst_rxcable:"RX cable/U.FL",
+    env_open:"Open Field", env_urban:"Urban Multipath", env_trees:"Behind Trees",
+    env_bounce:"Low Ground-Bounce", env_body:"Body Shadow", env_valley:"Mountain LOS",
+    bdl_ptx:"VTX power", bdl_gtx:"TX gain", bdl_patt:"TX pattern (orientation)", bdl_txeff:"TX efficiency",
+    bdl_txswr:"TX SWR", bdl_txoff:"TX off-band", bdl_txinst:"TX install (cable/carbon)",
+    bdl_foliage:"Foliage / vegetation", bdl_obstacle:"Obstacle (knife-edge)", bdl_body:"Body shadow",
+    bdl_tworay:"Multipath (two-ray)", bdl_fspl:"Path loss (FSPL)", bdl_grx:"RX gain (active)",
+    bdl_rxpatt:"RX pattern (patch)", bdl_pol:"Polarization", bdl_fade:"Fading (instantaneous)",
+    bdl_divg:"Diversity gain", bdl_prx:"Received signal (Prx)", bdl_ni:"Noise + interference",
+    st_prime:"◉ LINK PRIME", st_stable:"◉ STABLE", st_marginal:"◐ MARGINAL", st_lost:"◯ LOST",
+    desc_tx:"The transmitter antenna on the drone that broadcasts video. Set its beam focus (gain), efficiency, match (SWR), and frequency range.",
+    desc_rx:"The receiver antennas on the goggles. Usually two: an omni for all directions + a patch for long range. Diversity selects/combines them.",
+    desc_env:"The field conditions & interference the signal faces: distance, angle, obstacles, reflections, and interference.",
+    freq_center_h:"antenna's sweet spot", bw_h:"wider = safer",
+    vtx_power_h:"more = farther", op_freq_h:"your video channel",
+    txcable_h:"keep it short", rxcable_h:"keep it short",
+    tip_gain:"How much the antenna focuses energy in one direction. High gain = long range but narrow; low = spreads evenly. A drone omni is ideally 1–3 dBi.",
+    tip_eff:"The percent of power actually radiated as waves; the rest becomes heat. ≥80% is good. Cheap/damaged antennas can be under 60%.",
+    tip_swr:"How well the antenna matches the radio. SWR 1.0 is perfect; higher means more power reflects back & heats up. Aim for under 1.5.",
+    tip_freq:"The frequency where the antenna performs best. Ideally near the channel you use (e.g. 5.8 GHz).",
+    tip_bw:"The frequency range where the antenna stays good. Wider = more tolerant if your channel is far from the center freq.",
+    tip_power:"Video transmitter power (mW). More = longer range, but drains the battery & may break rules. Each 2× power ≈ +3 dB.",
+    tip_opfreq:"The channel/frequency currently sending video. Best kept near the antenna's center freq to avoid loss.",
+    tip_dist:"The drone's distance from the pilot. Farther = weaker signal (inverse-square law). Dragging the drone in the arena also changes this.",
+    tip_elev:"The drone's angle above the horizon. 0°=eye level, 90°=straight overhead. Affects the antenna pattern & ground reflection.",
+    tip_tilt:"The drone antenna's tilt during maneuvers. A tilted antenna misaligns polarization & can drop the signal.",
+    tip_patchgain:"The patch antenna's focus. High gain = very long range but a narrower angle, so it must be aimed right at the drone.",
+    tip_foliage:"Attenuation from trees/leaves (especially wet ones). 5.8 GHz is easily absorbed by foliage, so the signal drops noticeably.",
+    tip_obstacle:"A hard obstacle like a hill/building in the signal path (knife-edge). It cuts part of the wave bending past its edge.",
+    tip_multipath:"How severe the reflections off ground/objects are. Reflections can boost or cancel the original signal → it rises and falls (fading).",
+    tip_interf:"Other signals jamming the same channel (WiFi, other pilots). Higher (e.g. -90 dBm) makes it harder for our signal to stand out.",
+    tip_nf:"How much noise the goggles receiver itself adds. Lower (dB) = more sensitive to weak signals.",
+    tip_cable:"Signal loss in the cable/U.FL between radio & antenna. Longer/worse = more loss. Keep it short & use good cable.",
+    tip_carbon:"A carbon frame/battery near the antenna absorbs & detunes it. Give the antenna some clearance.",
+    tip_pol:"The wave's spin direction. TX & RX must match (LHCP-LHCP or RHCP-RHCP). Opposite hands drop the signal ~25 dB. Linear = neutral but loses 3 dB to CP.",
+    tip_div:"How the goggles use 2 antennas. OFF = 1 antenna. SEL = pick the strongest. MRC = combine both (best, +1–3 dB).",
+    tip_patch_toggle:"Turn on the patch (directional) antenna as a second antenna. Great for long range when the drone is in front of you.",
+    tip_ground:"The signal bounces off the ground then meets the direct signal. It can add (+6 dB) or cancel out depending on distance/height.",
+    tip_body:"The pilot's body blocks the antenna when the drone flies low behind you. Can cut ~10 dB. Turn your body to avoid it.",
+    tip_orbit:"The drone moves automatically (changing range & angle) so you can watch the effects without dragging it.",
+    tip_roll:"The drone automatically tilts (simulating a maneuver/roll) to show how antenna tilt affects the signal.",
+    tip_sub_omni:"The omni antenna receives from all directions — your go-to when the drone is beside, behind, or near you.",
+    tip_sub_patch:"The patch antenna focuses in one direction (forward). Long range, but it must be aimed at the drone.",
+    tip_sub_geo:"The drone's position relative to the pilot: TX power, channel, distance, height/angle, and antenna tilt.",
+    tip_sub_envint:"Obstacles & interference: foliage, buildings, reflections (multipath), WiFi/other-pilot interference, and receiver sensitivity.",
+  }
+};
+const t = k => (I18N[LANG] && I18N[LANG][k]!==undefined) ? I18N[LANG][k]
+              : (I18N.id[k]!==undefined ? I18N.id[k] : k);
+
+/* ============================================================
+   STATE
+============================================================ */
+const state = {
+  vtxPower: 600,   // mW
+  fop: 5800,       // operating freq MHz
+  dist: 1000,      // slant range meters
+  elev: 8,         // drone elevation above horizon (deg)
+  tilt: 15,        // drone antenna tilt from vertical (roll/pitch, deg)
+  autoOrbit: true,
+  autoRoll: false,
+  altRx: 1.5,                                   // pilot/goggles antenna height (m)
+  video: 'analog',                              // analog | hdzero | walksnail | dji
+  div: 'SEL',                                   // OFF | SEL | MRC  (diversity combiner)
+  tx:  { gain:1.9, eff:99, swr:1.5, fc:5800, bw:400, pol:'LHCP' },
+  rx:  { gain:2.0, eff:90, swr:1.3, fc:5800, bw:400, pol:'LHCP' },   // goggles omni
+  rx2: { gain:8.0, eff:85, pol:'LHCP', on:true },                    // goggles patch (directional)
+  env:   { preset:'open', foliage:0, obstacle:0, mp:8, ground:true, body:false },
+  noise: { nf:6, interf:-110 },                 // RX noise figure (dB); in-channel interference (dBm)
+  install:{ cable:0.3, carbon:0, rxcable:0.2 }, // TX U.FL/coax, carbon detune, RX U.FL (dB)
+};
+
+const presets = {
+  foxeer:    { name:'Foxeer Lollipop 4+', gain:2.6,  eff:80,    swr:1.3,  fc:5800, bw:400, pol:'LHCP', est:true },
+  albatross: { name:'iFlight Albatross V2.1', gain:2.95, eff:66.82, swr:1.5, fc:5650, bw:700, pol:'LHCP' },
+  truerc:    { name:'TrueRC Singularity', gain:1.9,  eff:99,    swr:1.5,  fc:5800, bw:400, pol:'LHCP' },
+  momoda:    { name:'GEPRC Momoda2', gain:2.45, eff:85,    swr:1.43, fc:5650, bw:700, pol:'LHCP' },
+  sequre:    { name:'Sequre 5.8G CP', gain:2.0,  eff:70,    swr:1.5,  fc:5762, bw:325, pol:'LHCP', est:true },
+};
+
+// Video systems: bw=receiver noise bandwidth (MHz), req=usable SINR (dB), span=cliff width (dB)
+const VIDEO = {
+  analog:    { label:'Analog',    bw:6,  req:6,  span:34, digital:false, lat:30, mbps:0  },
+  hdzero:    { label:'HDZero',    bw:27, req:10, span:16, digital:true,  lat:18, mbps:0  },
+  walksnail: { label:'Walksnail', bw:20, req:12, span:13, digital:true,  lat:28, mbps:30 },
+  dji:       { label:'DJI O4',    bw:20, req:13, span:10, digital:true,  lat:35, mbps:50 },
+};
+
+// Environment presets (drive sliders + hidden interference)
+const envPresets = {
+  open:   { label:'Sawah / Open Field', foliage:0,  obstacle:0, mp:6,  ground:true,  body:false, interf:-112 },
+  urban:  { label:'Urban Multipath',    foliage:2,  obstacle:5, mp:70, ground:true,  body:false, interf:-95  },
+  trees:  { label:'Balik Pohon',        foliage:10, obstacle:3, mp:45, ground:true,  body:false, interf:-104 },
+  bounce: { label:'Low Ground-Bounce',  foliage:0,  obstacle:0, mp:35, ground:true,  body:false, interf:-108 },
+  body:   { label:'Body Shadow',        foliage:0,  obstacle:0, mp:12, ground:true,  body:true,  interf:-104 },
+  valley: { label:'Mountain LOS',       foliage:1,  obstacle:0, mp:10, ground:false, body:false, interf:-114 },
+};
+
+/* ============================================================
+   PHYSICS
+============================================================ */
+const D2R = Math.PI/180, R2D = 180/Math.PI;
+const clamp = (v,a,b)=>Math.max(a,Math.min(b,v));
+const log10 = Math.log10;
+const addPow = (a,b)=> 10*log10(Math.pow(10,a/10)+Math.pow(10,b/10));  // sum two powers in dB(m)
+
+function swrDb(swr){ const g=(swr-1)/(swr+1); return 10*log10(Math.max(1e-4,1-g*g)); }
+function effDb(pct){ return 10*log10(clamp(pct,1,100)/100); }
+function offBandDb(f, fc, bw){
+  const half=bw/2, det=Math.abs(f-fc);
+  if(det<=half) return 0;
+  const x=(det-half)/half;
+  return Math.max(-40, -10*x*x);
+}
+function fsplDb(d_m, f_MHz){ d_m=Math.max(1,d_m); return 20*log10(d_m)+20*log10(f_MHz)-27.55; }
+
+// TX omni "donut": peak in horizontal plane, deep null along the antenna axis
+function patternFactorDb(psiDeg, gain){
+  const k = 1 + Math.max(0,(gain-1.76))*0.6;     // higher gain -> flatter/narrower donut
+  const s = Math.abs(Math.sin(psiDeg*D2R));
+  const v = Math.pow(Math.max(1e-3,s), 2*k);
+  return Math.max(-40, 10*log10(v));
+}
+// RX patch: directional, boresight tracks drone (limited head-tilt); narrower beam at higher gain
+// Standard parabolic main-lobe model (3GPP/ITU): A(θ) = -12·(θ/θ₃dB)² → -3 dB at θ = θ₃dB/2
+function patchFactorDb(offDeg, gain){
+  const bw = clamp(120 - (gain-2)*8, 28, 130);   // full -3 dB beamwidth (deg)
+  const x = offDeg/bw;                            // θ / θ₃dB  (−3 dB exactly at offDeg = bw/2)
+  return Math.max(-28, -12*x*x);
+}
+function polLossDb(tx, rx, tiltDeg){
+  const txCP = tx!=='LIN', rxCP = rx!=='LIN';
+  if(txCP && rxCP) return tx===rx ? 0 : -25;      // matched vs opposite-hand CP
+  if(txCP !== rxCP) return -3;                      // one CP, one linear
+  const d = Math.abs(Math.cos(tiltDeg*D2R));        // both linear -> alignment matters
+  return Math.max(-40, 20*log10(Math.max(0.01,d)));
+}
+// Thermal noise floor (dBm) for a given receiver bandwidth + noise figure
+function noiseFloorDbm(bwMHz, nf){ return -174 + 10*log10(bwMHz*1e6) + nf; }
+// Two-ray ground reflection: constructive/destructive vs free space (dB)
+function twoRayDb(dH, hTx, hRx, fMHz, gammaMag){
+  const lambda = 300/fMHz;                          // m (c≈3e8 m/s, f in MHz)
+  const dd = 2*hTx*hRx/Math.max(dH,1);              // direct/reflected path-length difference (m)
+  const dphi = 2*Math.PI*dd/lambda;
+  const re = 1 + gammaMag*Math.cos(Math.PI+dphi);   // reflection phase ≈ π (grazing)
+  const im = gammaMag*Math.sin(Math.PI+dphi);
+  return 20*log10(clamp(Math.hypot(re,im),0.05,2)); // up to +6 dB or deep null
+}
+// Small-scale time-varying fade per diversity branch (independent realisations)
+let fadePhase=[[],[]];
+function initFade(){
+  for(let b=0;b<2;b++){ fadePhase[b]=[];
+    for(let i=0;i<6;i++) fadePhase[b].push({f:0.4+Math.random()*2.2, p:Math.random()*6.283}); }
+}
+function fadeDb(t, branch, sev){
+  if(sev<=0.001) return 0;
+  const ph=fadePhase[branch]||fadePhase[0];
+  let re=0, im=0;
+  for(const c of ph){ re+=Math.cos(t*c.f+c.p); im+=Math.sin(t*c.f+c.p); }
+  re/=ph.length; im/=ph.length;
+  const env=Math.hypot(re,im);                      // Rayleigh-ish envelope 0..~1
+  const lin=(1-sev) + sev*env*1.6;
+  return 10*log10(Math.max(0.02,lin));
+}
+initFade();
+
+function compute(t){
+  if(t===undefined) t=performance.now()/1000;
+  const s=state, sys=VIDEO[s.video];
+  const ptx = 10*log10(s.vtxPower);
+
+  // TX donut pattern (shared by both RX branches)
+  const cospsi = -Math.sin((s.elev+s.tilt)*D2R);
+  const psi = Math.acos(clamp(cospsi,-1,1))*R2D;
+  const patt = patternFactorDb(psi, s.tx.gain);
+  const txEff=effDb(s.tx.eff), txSwr=swrDb(s.tx.swr);
+  const txOff=offBandDb(s.fop,s.tx.fc,s.tx.bw);
+  const fspl = fsplDb(s.dist, s.fop);
+
+  // installation + environment (shared losses)
+  const txInstall = -(s.install.cable + s.install.carbon);
+  const foliage  = -s.env.foliage;
+  const obstacle = -s.env.obstacle;
+  const bodyDb   = (s.env.body && s.elev<12) ? -10 : 0;
+
+  // two-ray ground reflection (large-scale, geometry-driven)
+  const dH  = Math.max(1, s.dist*Math.cos(s.elev*D2R));   // horizontal distance
+  const hTx = Math.max(0.5, s.dist*Math.sin(s.elev*D2R)); // drone altitude
+  const gamma = 0.45 + 0.5*(s.env.mp/100);
+  const twoRay = s.env.ground ? twoRayDb(dH, hTx, s.altRx, s.fop, gamma) : 0;
+
+  // power reaching the goggles antennas (before RX-specific terms + per-branch fade)
+  const common = ptx + s.tx.gain + patt + txEff + txSwr + txOff
+               + txInstall + foliage + obstacle + bodyDb + twoRay - fspl;
+
+  function branch(rx, isPatch, bi){
+    const rxEff = effDb(rx.eff);
+    const rxSwr = isPatch ? 0 : swrDb(s.rx.swr);
+    const rxOff = isPatch ? 0 : offBandDb(s.fop, s.rx.fc, s.rx.bw);
+    let rxPatt = 0;
+    if(isPatch){
+      const aim = clamp(s.elev,0,55);                       // pilot tilts head to follow (limited to 55°)
+      const off = Math.abs(s.elev-aim);                     // true off-boresight angle past the tracking limit
+      rxPatt = patchFactorDb(off, rx.gain);
+    }
+    const pol  = polLossDb(s.tx.pol, rx.pol, s.tilt);
+    const fade = fadeDb(t, bi, s.env.mp/100);
+    const prx  = common + rx.gain + rxEff + rxSwr + rxOff + rxPatt + pol
+               - s.install.rxcable + fade;
+    return {prx, rxEff, rxSwr, rxOff, rxPatt, pol, fade, isPatch, gain:rx.gain};
+  }
+
+  const bA = branch(s.rx, false, 0);
+  const bB = s.rx2.on ? branch(s.rx2, true, 1) : null;
+
+  // diversity combine
+  let prx, combMode, divGain=0;
+  const best = bB ? Math.max(bA.prx,bB.prx) : bA.prx;
+  if(!bB || s.div==='OFF'){ prx=bA.prx; combMode='SINGLE'; }
+  else if(s.div==='SEL'){ prx=best; combMode='SEL'; }
+  else { prx=addPow(bA.prx,bB.prx); combMode='MRC'; divGain=prx-best; }
+  const bWin = (bB && bB.prx>=bA.prx) ? bB : bA;
+
+  // noise floor + interference -> SINR
+  const nFloor = noiseFloorDbm(sys.bw, s.noise.nf);
+  const ni = addPow(nFloor, s.noise.interf);
+  const sinr = prx - ni;
+  const margin = sinr - sys.req;
+  const lq = Math.round(clamp((margin + sys.span*0.5)/sys.span*100, 0, 100));
+
+  return { ptx, patt, psi, txEff, txSwr, txOff, fspl, txInstall, foliage, obstacle, bodyDb, twoRay,
+           bA, bB, bWin, prx, combMode, divGain, nFloor, ni, sinr, margin, lq, sys,
+           pol:bWin.pol, rxPatt:bWin.rxPatt, fade:bWin.fade, rxGainWin:bWin.gain, patchWin:bWin.isPatch };
+}
+
+/* ============================================================
+   CONTROL BUILDERS
+============================================================ */
+const $ = sel => document.querySelector(sel);
+function fmtFreq(v){ return v+' MHz'; }
+function fmtDist(v){ return v>=1000 ? (v/1000).toFixed(2)+' km' : Math.round(v)+' m'; }
+
+const txConfig = [
+  {lblKey:'tx_gain', min:0, max:6, step:.05, unit:'dBi', get:()=>state.tx.gain, set:v=>state.tx.gain=v, hintKey:'tx_gain_h', tipKey:'tip_gain'},
+  {lblKey:'eff_rad', min:40, max:100, step:1, unit:'%', get:()=>state.tx.eff, set:v=>state.tx.eff=v, hintKey:'eff80', tipKey:'tip_eff'},
+  {lblKey:'swr', min:1, max:3, step:.01, unit:':1', get:()=>state.tx.swr, set:v=>state.tx.swr=v, hintKey:'swr_h', tipKey:'tip_swr'},
+  {lblKey:'freq_center', min:5300, max:6000, step:5, unit:'', fmt:fmtFreq, get:()=>state.tx.fc, set:v=>state.tx.fc=v, hintKey:'freq_center_h', tipKey:'tip_freq'},
+  {lblKey:'bw', min:100, max:800, step:10, unit:'MHz', get:()=>state.tx.bw, set:v=>state.tx.bw=v, hintKey:'bw_h', tipKey:'tip_bw'},
+];
+const rxConfig = [
+  {lblKey:'tx_gain', min:0, max:12, step:.1, unit:'dBi', get:()=>state.rx.gain, set:v=>state.rx.gain=v, hintKey:'rx_gain_h', tipKey:'tip_gain'},
+  {lblKey:'eff_rad', min:40, max:100, step:1, unit:'%', get:()=>state.rx.eff, set:v=>state.rx.eff=v, hintKey:'eff80', tipKey:'tip_eff'},
+  {lblKey:'swr', min:1, max:3, step:.01, unit:':1', get:()=>state.rx.swr, set:v=>state.rx.swr=v, hintKey:'swr_h', tipKey:'tip_swr'},
+];
+const envConfig = [
+  {lblKey:'vtx_power', min:25, max:2000, step:25, unit:'mW', get:()=>state.vtxPower, set:v=>state.vtxPower=v, hintKey:'vtx_power_h', tipKey:'tip_power'},
+  {lblKey:'op_freq', min:5300, max:6000, step:5, unit:'', fmt:fmtFreq, get:()=>state.fop, set:v=>state.fop=v, hintKey:'op_freq_h', tipKey:'tip_opfreq'},
+  {lblKey:'drone_dist', min:10, max:20000, step:10, unit:'', fmt:fmtDist, get:()=>state.dist, set:v=>state.dist=v, tipKey:'tip_dist'},
+  {lblKey:'drone_elev', min:0, max:90, step:1, unit:'°', get:()=>state.elev, set:v=>state.elev=v, hintKey:'elev_h', tipKey:'tip_elev'},
+  {lblKey:'drone_tilt', min:0, max:90, step:1, unit:'°', get:()=>state.tilt, set:v=>state.tilt=v, hintKey:'tilt_h', tipKey:'tip_tilt'},
+];
+const rx2Config = [
+  {lblKey:'patch_gain', min:5, max:14, step:.1, unit:'dBi', get:()=>state.rx2.gain, set:v=>state.rx2.gain=v, hintKey:'patch_gain_h', tipKey:'tip_patchgain'},
+  {lblKey:'patch_eff', min:50, max:95, step:1, unit:'%', get:()=>state.rx2.eff, set:v=>state.rx2.eff=v, hintKey:'eff80', tipKey:'tip_eff'},
+];
+const envExtraConfig = [
+  {lblKey:'foliage', min:0, max:20, step:.5, unit:'dB', get:()=>state.env.foliage, set:v=>state.env.foliage=v, hintKey:'foliage_h', tipKey:'tip_foliage'},
+  {lblKey:'obstacle', min:0, max:25, step:.5, unit:'dB', get:()=>state.env.obstacle, set:v=>state.env.obstacle=v, hintKey:'obstacle_h', tipKey:'tip_obstacle'},
+  {lblKey:'mp_sev', min:0, max:100, step:1, unit:'%', get:()=>state.env.mp, set:v=>state.env.mp=v, hintKey:'mp_h', tipKey:'tip_multipath'},
+  {lblKey:'interf', min:-120, max:-85, step:1, unit:'dBm', get:()=>state.noise.interf, set:v=>state.noise.interf=v, hintKey:'interf_h', tipKey:'tip_interf'},
+  {lblKey:'nf', min:2, max:12, step:.5, unit:'dB', get:()=>state.noise.nf, set:v=>state.noise.nf=v, hintKey:'nf_h', tipKey:'tip_nf'},
+];
+const installConfig = [
+  {lblKey:'inst_txcable', min:0, max:3, step:.1, unit:'dB', get:()=>state.install.cable, set:v=>state.install.cable=v, hintKey:'txcable_h', tipKey:'tip_cable'},
+  {lblKey:'inst_carbon', min:0, max:6, step:.5, unit:'dB', get:()=>state.install.carbon, set:v=>state.install.carbon=v, hintKey:'carbon_h', tipKey:'tip_carbon'},
+  {lblKey:'inst_rxcable', min:0, max:3, step:.1, unit:'dB', get:()=>state.install.rxcable, set:v=>state.install.rxcable=v, hintKey:'rxcable_h', tipKey:'tip_cable'},
+];
+
+function buildSliders(host, cfgs){
+  cfgs.forEach(c=>{
+    const wrap=document.createElement('div'); wrap.className='ctrl';
+    const row=document.createElement('div'); row.className='row';
+    const labWrap=document.createElement('span'); labWrap.style.cssText='display:flex;align-items:center;gap:6px';
+    const lab=document.createElement('label'); lab.textContent=t(c.lblKey);
+    labWrap.appendChild(lab);
+    if(c.tipKey){
+      const h=document.createElement('span'); h.className='help'; h.dataset.tip=c.tipKey;
+      h.tabIndex=0; h.textContent='?'; labWrap.appendChild(h);
+    }
+    const val=document.createElement('span'); val.className='val';
+    row.appendChild(labWrap); row.appendChild(val);
+    const inp=document.createElement('input'); inp.type='range';
+    inp.min=c.min; inp.max=c.max; inp.step=c.step;
+    const render=()=>{
+      const v=c.get();
+      inp.value=v;
+      const pct=((v-c.min)/(c.max-c.min))*100;
+      inp.style.setProperty('--p', pct+'%');
+      const text = c.fmt ? c.fmt(v) : (Number.isInteger(c.step)? Math.round(v) : (+v).toFixed(2))+ (c.unit?(' '+c.unit):'');
+      val.innerHTML = text + (c.hintKey?(' <small>· '+t(c.hintKey)+'</small>'):'');
+    };
+    inp.addEventListener('input', ()=>{ c.set(+inp.value); render(); markCustom(); });
+    c._render=render; c._lab=lab;
+    wrap.appendChild(row); wrap.appendChild(inp); host.appendChild(wrap);
+  });
+}
+
+function buildPolSeg(host, opts, getv, setv){
+  opts.forEach(o=>{
+    const b=document.createElement('button'); b.textContent=o.label; b.dataset.v=o.v;
+    b.addEventListener('click', ()=>{ setv(o.v); refreshPolSeg(host,getv); markCustom(); });
+    host.appendChild(b);
+  });
+  refreshPolSeg(host, getv);
+}
+function refreshPolSeg(host, getv){
+  [...host.children].forEach(b=> b.classList.toggle('on', b.dataset.v===getv()));
+}
+
+const polOpts=[{label:'LHCP',v:'LHCP'},{label:'RHCP',v:'RHCP'},{label:'Linear',v:'LIN'}];
+
+// generic segmented control (no preset-clearing side effect)
+function buildSeg(host, opts, getv, setv){
+  opts.forEach(o=>{
+    const b=document.createElement('button'); b.textContent=o.label; b.dataset.v=o.v;
+    b.addEventListener('click', ()=>{ setv(o.v); refreshPolSeg(host,getv); });
+    host.appendChild(b);
+  });
+  refreshPolSeg(host, getv);
+}
+
+buildSliders($('#txCtrls'), txConfig);
+buildSliders($('#rxCtrls'), rxConfig);
+buildSliders($('#rx2Ctrls'), rx2Config);
+buildSliders($('#envCtrls'), envConfig);
+buildSliders($('#envExtra'), envExtraConfig);
+buildSliders($('#installCtrls'), installConfig);
+buildPolSeg($('#txPol'), polOpts, ()=>state.tx.pol, v=>state.tx.pol=v);
+buildPolSeg($('#rxPol'), polOpts, ()=>state.rx.pol, v=>state.rx.pol=v);
+buildSeg($('#rx2Pol'), polOpts, ()=>state.rx2.pol, v=>state.rx2.pol=v);
+buildSeg($('#videoSeg'), [
+  {label:'Analog',v:'analog'},{label:'HDZero',v:'hdzero'},{label:'Walksnail',v:'walksnail'},{label:'DJI O4',v:'dji'}
+], ()=>state.video, v=>state.video=v);
+buildSeg($('#divSeg'), [
+  {label:'OFF',v:'OFF'},{label:'SEL',v:'SEL'},{label:'MRC',v:'MRC'}
+], ()=>state.div, v=>state.div=v);
+
+function renderAllSliders(){ [...txConfig,...rxConfig,...rx2Config,...envConfig,...envExtraConfig,...installConfig].forEach(c=>c._render&&c._render()); }
+
+// presets
+const presetHost=$('#presets');
+Object.entries(presets).forEach(([key,p])=>{
+  const b=document.createElement('button');
+  b.textContent = p.name + (p.est?' *':'');
+  b.dataset.k=key;
+  b.addEventListener('click', ()=>{
+    state.tx.gain=p.gain; state.tx.eff=p.eff; state.tx.swr=p.swr;
+    state.tx.fc=p.fc; state.tx.bw=p.bw; state.tx.pol=p.pol;
+    [...presetHost.children].forEach(x=>x.classList.toggle('active', x.dataset.k===key));
+    renderAllSliders(); refreshPolSeg($('#txPol'), ()=>state.tx.pol);
+  });
+  presetHost.appendChild(b);
+});
+function markCustom(){ [...presetHost.children].forEach(x=>x.classList.remove('active')); }
+
+// toggles
+$('#togOrbit').addEventListener('click', function(){ state.autoOrbit=!state.autoOrbit; this.classList.toggle('on',state.autoOrbit); });
+$('#togRoll').addEventListener('click', function(){ state.autoRoll=!state.autoRoll; this.classList.toggle('on',state.autoRoll); });
+$('#togGround').addEventListener('click', function(){ state.env.ground=!state.env.ground; this.classList.toggle('on',state.env.ground); });
+$('#togBody').addEventListener('click', function(){ state.env.body=!state.env.body; this.classList.toggle('on',state.env.body); });
+$('#togPatch').addEventListener('click', function(){ state.rx2.on=!state.rx2.on; this.classList.toggle('on',state.rx2.on); });
+
+// environment presets
+const envPresetHost=$('#envPresets');
+Object.entries(envPresets).forEach(([key,p])=>{
+  const b=document.createElement('button'); b.textContent=t('env_'+key); b.dataset.ek=key;
+  b.addEventListener('click', ()=>{
+    Object.assign(state.env,{foliage:p.foliage,obstacle:p.obstacle,mp:p.mp,ground:p.ground,body:p.body,preset:key});
+    state.noise.interf=p.interf;
+    [...envPresetHost.children].forEach(x=>x.classList.toggle('active', x.dataset.ek===key));
+    $('#togGround').classList.toggle('on', state.env.ground);
+    $('#togBody').classList.toggle('on', state.env.body);
+    renderAllSliders();
+  });
+  envPresetHost.appendChild(b);
+});
+$('[data-ek="open"]')?.classList.add('active');
+
+/* ============================================================
+   CANVAS · ARENA
+============================================================ */
+const arena=$('#arena'), ax=arena.getContext('2d');
+let W=0,H=0,DPR=Math.min(2,window.devicePixelRatio||1);
+let pilot={x:0,y:0}, maxR=300;
+function resize(){
+  const r=arena.getBoundingClientRect();
+  W=r.width; H=r.height;
+  arena.width=W*DPR; arena.height=H*DPR;
+  ax.setTransform(DPR,0,0,DPR,0,0);
+  pilot.x=86; pilot.y=H*0.82;
+  maxR=Math.min(W-110, pilot.y-40);
+}
+window.addEventListener('resize', resize);
+
+function distToPx(d){
+  const t=(log10(d)-1)/(log10(20000)-1);
+  return 46 + clamp(t,0,1)*(maxR-46);
+}
+function pxToDist(px){
+  const t=(px-46)/(maxR-46);
+  return Math.pow(10, 1 + clamp(t,0,1)*(log10(20000)-1));
+}
+
+// drag drone
+let dragging=false;
+function pointerPos(e){
+  const r=arena.getBoundingClientRect();
+  const cx=(e.touches?e.touches[0].clientX:e.clientX)-r.left;
+  const cy=(e.touches?e.touches[0].clientY:e.clientY)-r.top;
+  return {cx,cy};
+}
+function applyDrag(e){
+  const {cx,cy}=pointerPos(e);
+  const dx=cx-pilot.x, dy=pilot.y-cy;       // up positive
+  const px=Math.hypot(dx,dy);
+  state.dist = Math.round(clamp(pxToDist(px),10,10000));
+  state.elev = Math.round(clamp(Math.atan2(dy,Math.max(1,dx))*R2D,0,90));
+  state.autoOrbit=false; $('#togOrbit').classList.remove('on');
+  renderAllSliders();
+}
+arena.addEventListener('mousedown', e=>{dragging=true; applyDrag(e);});
+window.addEventListener('mousemove', e=>{ if(dragging) applyDrag(e); });
+window.addEventListener('mouseup', ()=>dragging=false);
+arena.addEventListener('touchstart', e=>{dragging=true; applyDrag(e); e.preventDefault();},{passive:false});
+arena.addEventListener('touchmove', e=>{ if(dragging){applyDrag(e); e.preventDefault();} },{passive:false});
+arena.addEventListener('touchend', ()=>dragging=false);
+
+// waves between drone and pilot
+let waves=[];
+function spawnWaves(dx,dy,lq){
+  const prob = 0.15 + lq/100*0.6;
+  if(Math.random()<prob) waves.push({t:0, j:(1-lq/100)});
+}
+
+function colorForLq(lq){
+  if(lq>=55) return '52,223,251';      // cyan strong
+  if(lq>=25) return '255,193,77';       // amber
+  return '255,93,108';                  // red
+}
+
+/* drone & goggles sprites */
+function drawDrone(x,y,tiltDeg,lq){
+  ax.save(); ax.translate(x,y); ax.rotate(tiltDeg*D2R);
+  const c=colorForLq(lq);
+  // arms
+  ax.strokeStyle='rgba('+c+',.9)'; ax.lineWidth=2.4;
+  for(const s of [[-1,-1],[1,-1],[-1,1],[1,1]]){
+    ax.beginPath(); ax.moveTo(0,0); ax.lineTo(s[0]*15,s[1]*11); ax.stroke();
+    ax.beginPath(); ax.arc(s[0]*15,s[1]*11,5.5,0,7); ax.strokeStyle='rgba('+c+',.55)'; ax.stroke();
+    ax.strokeStyle='rgba('+c+',.9)';
+  }
+  // body
+  ax.fillStyle='rgba('+c+',.18)'; ax.strokeStyle='rgba('+c+',1)'; ax.lineWidth=1.6;
+  ax.beginPath(); ax.roundRect(-9,-7,18,14,3); ax.fill(); ax.stroke();
+  // antenna along axis (up)
+  ax.strokeStyle='#eafff6'; ax.lineWidth=2;
+  ax.beginPath(); ax.moveTo(0,-6); ax.lineTo(0,-26); ax.stroke();
+  ax.beginPath(); ax.arc(0,-28,3.2,0,7); ax.fillStyle='rgba('+c+',1)'; ax.fill();
+  ax.restore();
+}
+function drawGoggles(x,y){
+  ax.save(); ax.translate(x,y);
+  // head
+  ax.fillStyle='rgba(120,160,150,.18)'; ax.strokeStyle='rgba(120,160,150,.5)'; ax.lineWidth=1.4;
+  ax.beginPath(); ax.arc(0,6,15,0,7); ax.fill(); ax.stroke();
+  // goggle body
+  ax.fillStyle='rgba(8,20,18,.95)';
+  ax.beginPath(); ax.roundRect(-22,-12,44,20,5); ax.fill();
+  ax.strokeStyle='rgba(52,223,251,.9)'; ax.lineWidth=1.6; ax.stroke();
+  // lenses
+  ax.fillStyle='rgba(52,223,251,.25)';
+  ax.beginPath(); ax.arc(-10,-2,5.4,0,7); ax.fill();
+  ax.beginPath(); ax.arc(10,-2,5.4,0,7); ax.fill();
+  // antennas
+  ax.strokeStyle='rgba(52,223,251,.8)'; ax.lineWidth=1.8;
+  ax.beginPath(); ax.moveTo(-14,-12); ax.lineTo(-20,-30); ax.stroke();
+  ax.beginPath(); ax.moveTo(14,-12); ax.lineTo(20,-30); ax.stroke();
+  ax.fillStyle='rgba(52,223,251,1)';
+  ax.beginPath(); ax.arc(-20,-32,2.6,0,7); ax.fill();
+  ax.beginPath(); ax.arc(20,-32,2.6,0,7); ax.fill();
+  ax.restore();
+}
+
+function drawDonut(x,y,tiltDeg,gain,lq){
+  // axis world (sinTilt, cosTilt); screen vector (sinTilt, -cosTilt)
+  const t=tiltDeg*D2R;
+  const axisAng=Math.atan2(-Math.cos(t), Math.sin(t));
+  const k=1+Math.max(0,(gain-1.76))*0.6;
+  const A=40*(0.7+gain/7);
+  const c=colorForLq(lq);
+  ax.save(); ax.translate(x,y);
+  const grad=ax.createRadialGradient(0,0,4,0,0,A);
+  grad.addColorStop(0,'rgba('+c+',.30)');
+  grad.addColorStop(1,'rgba('+c+',0)');
+  ax.fillStyle=grad; ax.strokeStyle='rgba('+c+',.55)'; ax.lineWidth=1.2;
+  ax.beginPath();
+  for(let a=0;a<=Math.PI*2+0.001;a+=0.06){
+    const m=Math.pow(Math.abs(Math.sin(a-axisAng)),k);
+    const r=4+A*m;
+    const px=Math.cos(a)*r, py=Math.sin(a)*r;
+    a===0?ax.moveTo(px,py):ax.lineTo(px,py);
+  }
+  ax.closePath(); ax.fill(); ax.stroke();
+  ax.restore();
+}
+
+function drawArena(res){
+  ax.clearRect(0,0,W,H);
+  const gy = pilot.y+22;
+  // background grid
+  ax.strokeStyle='rgba(80,255,180,.05)'; ax.lineWidth=1;
+  for(let gx=0; gx<W; gx+=34){ ax.beginPath(); ax.moveTo(gx,0); ax.lineTo(gx,H); ax.stroke(); }
+  for(let gyl=0; gyl<H; gyl+=34){ ax.beginPath(); ax.moveTo(0,gyl); ax.lineTo(W,gyl); ax.stroke(); }
+  // ground line
+  ax.strokeStyle='rgba(80,255,180,.18)'; ax.beginPath(); ax.moveTo(0,gy); ax.lineTo(W,gy); ax.stroke();
+
+  // drone position
+  const R=distToPx(state.dist), th=state.elev*D2R;
+  const dx=pilot.x+R*Math.cos(th), dy=pilot.y-R*Math.sin(th);
+  const c=colorForLq(res.lq);
+
+  // ground-reflection ray (two-ray multipath)
+  if(state.env.ground){
+    const pim = 2*gy-(pilot.y-6);
+    const tt=(gy-dy)/((pim-dy)||1);
+    const xr=dx+clamp(tt,0,1)*(pilot.x-dx);
+    const bcol = res.twoRay<-3 ? '255,93,108' : '120,200,160';
+    ax.strokeStyle='rgba('+bcol+',.30)'; ax.lineWidth=1; ax.setLineDash([3,4]);
+    ax.beginPath(); ax.moveTo(dx,dy); ax.lineTo(xr,gy); ax.lineTo(pilot.x,pilot.y-6); ax.stroke();
+    ax.setLineDash([]);
+    ax.fillStyle='rgba('+bcol+',.5)'; ax.beginPath(); ax.arc(xr,gy,2.4,0,7); ax.fill();
+  }
+
+  // obstacle (knife-edge) silhouette
+  if(state.env.obstacle>0){
+    const oh=12+state.env.obstacle*2.2, ox=pilot.x+(dx-pilot.x)*0.5;
+    ax.fillStyle='rgba(40,60,55,.85)'; ax.strokeStyle='rgba(80,255,180,.2)'; ax.lineWidth=1;
+    ax.beginPath(); ax.moveTo(ox-26,gy); ax.lineTo(ox-6,gy-oh); ax.lineTo(ox+8,gy-oh*0.8); ax.lineTo(ox+28,gy); ax.closePath();
+    ax.fill(); ax.stroke();
+  }
+  // foliage / treeline
+  if(state.env.foliage>0){
+    const n=Math.round(3+state.env.foliage/3), a=clamp(state.env.foliage/20,0,1);
+    for(let i=0;i<n;i++){
+      const tx=pilot.x+50+(W-pilot.x-70)*(i/(n-0.99)), h=14+(i%3)*6;
+      ax.fillStyle='rgba(30,'+Math.round(70+40*a)+',55,'+(0.4+0.5*a)+')';
+      ax.beginPath(); ax.moveTo(tx,gy); ax.lineTo(tx-7,gy-h); ax.lineTo(tx,gy-h-7); ax.lineTo(tx+7,gy-h); ax.closePath(); ax.fill();
+      ax.fillStyle='rgba(40,30,20,.6)'; ax.fillRect(tx-1.2,gy-h+2,2.4,h-1);
+    }
+  }
+
+  // range rings (distance reference) — 1-2-5 progression = even spacing on the log scale
+  ax.font="10px 'JetBrains Mono'";
+  const rings=[100,200,500,1000,2000,5000,10000,20000];
+  const ringFmt = d => d>=1000 ? (d/1000)+'km' : d+'m';
+  rings.forEach((d,i)=>{
+    const r=distToPx(d);
+    ax.strokeStyle='rgba(80,255,180,.10)'; ax.setLineDash([3,5]);
+    ax.beginPath(); ax.arc(pilot.x,pilot.y,r,-Math.PI/2,0); ax.stroke(); ax.setLineDash([]);
+    // fan labels across the quarter so consecutive rings never overlap
+    const la=-1.28 + (i+0.5)/rings.length*1.12;
+    ax.fillStyle='rgba(111,148,136,.7)';
+    ax.fillText(ringFmt(d), pilot.x+r*Math.cos(la)-9, pilot.y+r*Math.sin(la)+3);
+  });
+
+  // direct LOS line
+  ax.strokeStyle='rgba('+c+',.35)'; ax.lineWidth=1.4; ax.setLineDash([2,4]);
+  ax.beginPath(); ax.moveTo(pilot.x,pilot.y-6); ax.lineTo(dx,dy); ax.stroke(); ax.setLineDash([]);
+
+  // patch RX beam (directional, tracks drone with limited head-tilt)
+  if(state.rx2.on){
+    const aim=clamp(state.elev,0,55)*D2R;
+    const bw=clamp(120-(state.rx2.gain-2)*8,28,130)*D2R;
+    ax.save(); ax.translate(pilot.x,pilot.y-2);
+    const L=80;
+    const g=ax.createRadialGradient(0,0,2,0,0,L);
+    g.addColorStop(0,'rgba(52,223,251,.20)'); g.addColorStop(1,'rgba(52,223,251,0)');
+    ax.fillStyle=g; ax.beginPath(); ax.moveTo(0,0);
+    ax.arc(0,0,L,-aim-bw/2,-aim+bw/2); ax.closePath(); ax.fill();
+    ax.restore();
+  }
+
+  // donut pattern
+  drawDonut(dx,dy,state.tilt,state.tx.gain,res.lq);
+
+  // waves travelling drone -> pilot
+  spawnWaves(dx,dy,res.lq);
+  const reach = res.margin<0 ? clamp(0.35+res.lq/140,0.2,0.95) : 1.0;
+  waves.forEach(w=>{
+    w.t += 0.014;
+    if(w.t>reach){ w.dead=true; return; }
+    const jx=(Math.random()-0.5)*10*w.j, jy=(Math.random()-0.5)*10*w.j;
+    const px=dx+(pilot.x-dx)*w.t+jx, py=dy+(pilot.y-6-dy)*w.t+jy;
+    const alpha=(1-Math.abs(w.t-0.5)*0.6)*(0.4+res.lq/160);
+    ax.fillStyle='rgba('+c+','+alpha.toFixed(3)+')';
+    ax.beginPath(); ax.arc(px,py,2.4,0,7); ax.fill();
+  });
+  waves=waves.filter(w=>!w.dead && w.t<=1);
+  if(waves.length>240) waves=waves.slice(-240);
+
+  drawGoggles(pilot.x,pilot.y);
+  drawDrone(dx,dy,state.tilt,res.lq);
+
+  // warnings
+  ax.font="600 11px 'Chakra Petch'";
+  let wy = dy+40;
+  if(res.patt<-6){ ax.fillStyle='rgba(255,93,108,.9)'; ax.fillText('⚠ NULL ZONE', dx-30, wy); wy+=15; }
+  if(res.twoRay<-5){ ax.fillStyle='rgba(255,193,77,.95)'; ax.fillText('⚠ MULTIPATH FADE '+res.twoRay.toFixed(0)+'dB', dx-46, wy); wy+=15; }
+  if(res.pol<=-10){ ax.fillStyle='rgba(255,93,108,.9)'; ax.fillText('⚠ POL MISMATCH '+res.pol.toFixed(0)+'dB', (pilot.x+dx)/2-50, (pilot.y+dy)/2-8); }
+  if(res.bodyDb<0){ ax.fillStyle='rgba(255,93,108,.9)'; ax.fillText('⚠ BODY SHADOW', pilot.x-12, pilot.y-46); }
+}
+
+/* ============================================================
+   CANVAS · GOGGLES FEED
+============================================================ */
+const feed=$('#feed'), fx=feed.getContext('2d');
+const FW=236, FH=150;
+let noiseTex=document.createElement('canvas'); noiseTex.width=FW; noiseTex.height=FH;
+const ntx=noiseTex.getContext('2d');
+let noiseFrame=0;
+function regenNoise(){
+  const img=ntx.createImageData(FW,FH);
+  for(let i=0;i<img.data.length;i+=4){
+    const v=Math.random()*255;
+    img.data[i]=v; img.data[i+1]=v; img.data[i+2]=v; img.data[i+3]=255;
+  }
+  ntx.putImageData(img,0,0);
+}
+regenNoise();
+
+let feedFreezeT=0;
+function drawFeed(res){
+  const lq=res.lq, roll=state.tilt, sys=res.sys;
+  const now=performance.now()/1000;
+  const frozen = sys.digital && res.margin<0;        // digital holds the last frame
+  const t = frozen ? feedFreezeT : now;
+  if(!frozen) feedFreezeT = now;
+
+  // scene: tilt horizon by roll
+  fx.save();
+  fx.fillStyle='#02110f'; fx.fillRect(0,0,FW,FH);
+  fx.translate(FW/2,FH/2); fx.rotate(roll*D2R*0.9);
+  const sky=fx.createLinearGradient(0,-FH,0,0);
+  sky.addColorStop(0,'#0b3a52'); sky.addColorStop(1,'#16627e');
+  fx.fillStyle=sky; fx.fillRect(-FW,-FH,FW*2,FH);
+  const gnd=fx.createLinearGradient(0,0,0,FH);
+  gnd.addColorStop(0,'#15301f'); gnd.addColorStop(1,'#0a1c12');
+  fx.fillStyle=gnd; fx.fillRect(-FW,0,FW*2,FH);
+  fx.strokeStyle='rgba(255,255,255,.5)'; fx.lineWidth=1.5;
+  fx.beginPath(); fx.moveTo(-FW,0); fx.lineTo(FW,0); fx.stroke();
+  fx.fillStyle='rgba(255,220,150,.5)'; fx.beginPath(); fx.arc(60,-34,16,0,7); fx.fill();
+  fx.strokeStyle='rgba(120,255,190,.18)';
+  for(let i=0;i<6;i++){
+    const yy=10+((i*22 + (t*40)%22));
+    fx.beginPath(); fx.moveTo(-FW,yy); fx.lineTo(FW,yy); fx.stroke();
+  }
+  fx.restore();
+
+  if(sys.digital){
+    // digital: macroblock corruption proportional to (1-lq); freeze on link loss
+    const corrupt=clamp(1-lq/100,0,1);
+    if(corrupt>0.02){
+      const cols=Math.ceil(FW/16), rows=Math.ceil(FH/16);
+      const n=Math.round(corrupt*cols*rows*0.95);
+      for(let i=0;i<n;i++){
+        const bx=Math.floor(Math.random()*cols)*16, by=Math.floor(Math.random()*rows)*16;
+        const g=Math.random();
+        fx.fillStyle = g<0.5?'rgba(8,14,14,.92)':(g<0.8?'rgba(40,120,90,.5)':'rgba(180,80,140,.42)');
+        fx.fillRect(bx,by,16,16);
+        if(Math.random()<0.3){ fx.fillStyle='rgba(120,255,190,.12)'; fx.fillRect(bx,by,16,2); }
+      }
+    }
+  } else {
+    // analog: snow proportional to (1-lq)
+    const na=clamp(1-lq/100,0,1);
+    if(na>0.02){ if((noiseFrame++ %2)===0) regenNoise(); fx.globalAlpha=na*0.85; fx.drawImage(noiseTex,0,0); fx.globalAlpha=1; }
+  }
+
+  // OSD
+  const okCol = lq>=25?'rgba(120,255,190,.95)':'rgba(255,120,130,.95)';
+  fx.fillStyle='rgba(179,160,255,.92)'; fx.font="700 10px 'Chakra Petch'";
+  fx.textAlign='right'; fx.fillText(sys.label.toUpperCase(), FW-8, 14); fx.textAlign='left';
+  fx.fillStyle=okCol; fx.font="600 11px 'JetBrains Mono'";
+  fx.fillText((state.fop)+'MHz', 8, FH-30);
+  fx.fillText('LQ '+lq, 8, FH-16);
+  fx.fillText(res.prx.toFixed(0)+'dBm', 78, FH-30);
+  const lat = sys.lat + Math.round((1-lq/100)*140);
+  fx.fillText(lat+'ms', 78, FH-16);
+  fx.textAlign='right';
+  fx.fillText('SNR '+res.sinr.toFixed(0)+'dB', FW-8, FH-30);
+  fx.fillText((res.margin>=0?'+':'')+res.margin.toFixed(0)+'dB', FW-8, FH-16);
+  fx.textAlign='left';
+
+  if(res.margin<0){
+    fx.fillStyle='rgba(255,93,108,'+(0.55+0.45*Math.abs(Math.sin(now*4)))+')';
+    fx.font="700 16px 'Chakra Petch'"; fx.textAlign='center';
+    fx.fillText(sys.digital?'◢ SIGNAL LOST ◣':'◢ NO SIGNAL ◣', FW/2, FH/2-6);
+    fx.font="500 9px 'JetBrains Mono'";
+    fx.fillText(sys.digital?'FREEZE · RECONNECTING…':'SEARCHING…', FW/2, FH/2+10);
+    fx.textAlign='left';
+  }
+}
+
+/* ============================================================
+   TELEMETRY / BREAKDOWN
+============================================================ */
+const bd=$('#breakdown');
+const bdRows=[
+  ['bdl_ptx', 'ptx', 'dBm', 'plain'],
+  ['bdl_gtx', 'gtx', 'dB', 'pos'],
+  ['bdl_patt', 'patt', 'dB', 'auto'],
+  ['bdl_txeff', 'txEff', 'dB', 'auto'],
+  ['bdl_txswr', 'txSwr', 'dB', 'auto'],
+  ['bdl_txoff', 'txOff', 'dB', 'auto'],
+  ['bdl_txinst', 'txInstall', 'dB', 'auto'],
+  ['bdl_foliage', 'foliage', 'dB', 'auto'],
+  ['bdl_obstacle', 'obstacle', 'dB', 'auto'],
+  ['bdl_body', 'bodyDb', 'dB', 'auto'],
+  ['bdl_tworay', 'twoRay', 'dB', 'auto'],
+  ['bdl_fspl', 'fsplN', 'dB', 'neg'],
+  ['bdl_grx', 'grx', 'dB', 'pos'],
+  ['bdl_rxpatt', 'rxPatt', 'dB', 'auto'],
+  ['bdl_pol', 'pol', 'dB', 'auto'],
+  ['bdl_fade', 'fade', 'dB', 'auto'],
+  ['bdl_divg', 'divG', 'dB', 'pos'],
+  ['bdl_prx', 'prxN', 'dBm', 'plain'],
+  ['bdl_ni', 'niN', 'dBm', 'plain'],
+];
+const bdEls={}, bdLabelEls={}, bdLabelKeys={};
+bdRows.forEach(([lblKey,key])=>{
+  const d=document.createElement('div'); d.className='line';
+  const a=document.createElement('span'); a.textContent=t(lblKey);
+  const b=document.createElement('b'); b.id='bd_'+key;
+  d.appendChild(a); d.appendChild(b); bd.appendChild(d);
+  bdEls[key]=b; bdLabelEls[key]=a; bdLabelKeys[key]=lblKey; d.dataset.key=key;
+});
+const totalWrap=document.createElement('div'); totalWrap.className='total';
+totalWrap.innerHTML='<span class="k">SINR · SIGNAL / NOISE</span><span class="v" id="bd_sinr">--</span>';
+bd.appendChild(totalWrap);
+
+/* ============================================================
+   I18N · apply + language toggle
+============================================================ */
+const langTog=$('#langTog');
+function applyLang(){
+  document.documentElement.lang=LANG;
+  document.querySelectorAll('[data-i18n]').forEach(el=>{ el.textContent=t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-html]').forEach(el=>{ el.innerHTML=t(el.dataset.i18nHtml); });
+  [...txConfig,...rxConfig,...rx2Config,...envConfig,...envExtraConfig,...installConfig].forEach(c=>{
+    if(c._lab) c._lab.textContent=t(c.lblKey);
+    if(c._render) c._render();
+  });
+  [...envPresetHost.children].forEach(b=>{ b.textContent=t('env_'+b.dataset.ek); });
+  Object.keys(bdLabelEls).forEach(k=>{ bdLabelEls[k].textContent=t(bdLabelKeys[k]); });
+  [...langTog.children].forEach(b=> b.classList.toggle('on', b.dataset.lang===LANG));
+}
+[...langTog.children].forEach(b=> b.addEventListener('click', ()=>{
+  LANG=b.dataset.lang;
+  try{ localStorage.setItem('sf_lang', LANG); }catch(e){}
+  applyLang();
+  if(tipActive) showTip(tipActive);
+}));
+
+/* ============================================================
+   BEGINNER TOOLTIPS (? help icons)
+============================================================ */
+let tipBubble=null, tipActive=null;
+function ensureTipBubble(){
+  if(!tipBubble){ tipBubble=document.createElement('div'); tipBubble.id='tipBubble'; document.body.appendChild(tipBubble); }
+  return tipBubble;
+}
+function showTip(el){
+  const key = el && el.dataset ? el.dataset.tip : null; if(!key) return;
+  const tb=ensureTipBubble();
+  tb.textContent=t(key);
+  tb.classList.add('show');
+  const r=el.getBoundingClientRect();
+  const rect=tb.getBoundingClientRect();
+  const vw=document.documentElement.clientWidth;
+  let left=r.left + r.width/2 - rect.width/2 + window.scrollX;
+  left=Math.max(window.scrollX+8, Math.min(left, window.scrollX+vw-rect.width-8));
+  let top=r.top + window.scrollY - rect.height - 9;
+  if(r.top - rect.height - 9 < 4) top=r.bottom + window.scrollY + 9;   // flip below if no room above
+  tb.style.left=left+'px'; tb.style.top=top+'px';
+  tipActive=el;
+}
+function hideTip(){ if(tipBubble) tipBubble.classList.remove('show'); tipActive=null; }
+function wireHelp(el){
+  if(el.__wired) return; el.__wired=true;
+  el.addEventListener('mouseenter', ()=>showTip(el));
+  el.addEventListener('mouseleave', hideTip);
+  el.addEventListener('focus', ()=>showTip(el));
+  el.addEventListener('blur', hideTip);
+  el.addEventListener('click', e=>{ e.preventDefault(); e.stopPropagation(); (tipActive===el)?hideTip():showTip(el); });
+}
+function wireAllHelp(){ document.querySelectorAll('.help').forEach(wireHelp); }
+document.addEventListener('click', e=>{ if(tipActive && !(e.target.closest && e.target.closest('.help'))) hideTip(); });
+window.addEventListener('scroll', ()=>{ if(tipActive) showTip(tipActive); }, true);
+window.addEventListener('resize', ()=>{ if(tipActive) showTip(tipActive); });
+
+function sgn(v){ return (v>=0?'+':'')+v.toFixed(2); }
+function setRow(key,val,mode){
+  const el=bdEls[key]; if(!el) return;
+  el.textContent=sgn(val)+' dB';
+  const line=el.parentElement;
+  line.classList.remove('pos','neg');
+  if(mode==='pos' || (mode==='auto'&&val>=-0.05)) line.classList.add('pos');
+  else if(mode==='neg' || (mode==='auto'&&val<-0.05)) line.classList.add('neg');
+}
+
+let tframe=0;
+function updateTelemetry(res){
+  if(tframe++ %5!==0) return;   // throttle
+  bdEls.ptx.textContent=res.ptx.toFixed(1)+' dBm'; bdEls.ptx.parentElement.classList.add('pos');
+  setRow('gtx', state.tx.gain,'pos');
+  setRow('patt', res.patt,'auto');
+  setRow('txEff', res.txEff,'auto');
+  setRow('txSwr', res.txSwr,'auto');
+  setRow('txOff', res.txOff,'auto');
+  setRow('txInstall', res.txInstall,'auto');
+  setRow('foliage', res.foliage,'auto');
+  setRow('obstacle', res.obstacle,'auto');
+  setRow('bodyDb', res.bodyDb,'auto');
+  setRow('twoRay', res.twoRay,'auto');
+  setRow('fsplN', -res.fspl,'neg');
+  setRow('grx', res.rxGainWin,'pos');
+  setRow('rxPatt', res.rxPatt,'auto');
+  setRow('pol', res.pol,'auto');
+  setRow('fade', res.fade,'auto');
+  setRow('divG', res.divGain,'pos');
+  bdEls.prxN.textContent=res.prx.toFixed(1)+' dBm';
+  bdEls.niN.textContent=res.ni.toFixed(1)+' dBm'; bdEls.niN.parentElement.classList.add('neg');
+  const sEl=$('#bd_sinr');
+  sEl.textContent=res.sinr.toFixed(1)+' dB';
+  sEl.style.color = res.margin>=8?'var(--acc)':res.margin>=0?'var(--amber)':'var(--red)';
+
+  // HUD
+  const col=res.margin>=8?'var(--acc)':res.margin>=0?'var(--amber)':'var(--red)';
+  const hm=$('#hudMargin'); hm.textContent=(res.margin>=0?'+':'')+res.margin.toFixed(1)+'dB'; hm.style.color=col;
+  $('#hudRssi').textContent='SINR '+res.sinr.toFixed(0)+'dB · RSSI '+res.prx.toFixed(0)+' · LQ '+res.lq;
+  const st=$('#hudStatus');
+  let label = res.margin>=15?t('st_prime'):res.margin>=6?t('st_stable'):res.margin>=0?t('st_marginal'):t('st_lost');
+  st.textContent=label+' · '+res.combMode; st.style.color=col;
+
+  // live bars in header
+  [...$('#liveBars').children].forEach((b,i)=>{
+    b.style.opacity = res.lq > (i+1)*22 ? '1' : '.18';
+    b.style.background = col;
+  });
+}
+
+/* ============================================================
+   MAIN LOOP
+============================================================ */
+let orbitPhase=0, rollPhase=0;
+function loop(){
+  if(state.autoOrbit){
+    orbitPhase+=0.006;
+    state.elev = 8 + (Math.sin(orbitPhase)*0.5+0.5)*78;     // sweep 8..86
+    state.dist = Math.round(400 + (Math.sin(orbitPhase*0.7)*0.5+0.5)*18600);
+    envConfig[2]._render(); envConfig[3]._render();
+  }
+  if(state.autoRoll){
+    rollPhase+=0.03;
+    state.tilt = Math.round((Math.sin(rollPhase)*0.5+0.5)*90);
+    envConfig[4]._render();
+  }
+  const res=compute();
+  drawArena(res);
+  drawFeed(res);
+  updateTelemetry(res);
+  requestAnimationFrame(loop);
+}
+
+// init
+resize();
+$('[data-k="truerc"]')?.classList.add('active');
+renderAllSliders();
+applyLang();
+wireAllHelp();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

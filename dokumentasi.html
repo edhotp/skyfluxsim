@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Panduan Lengkap · SkyFlux Signal Simulator</title>
+<meta name="description" content="Dokumentasi lengkap & mudah dipahami untuk SkyFlux Signal Simulator — simulator sinyal video FPV 5.8 GHz. Penjelasan setiap kontrol, glosarium istilah, dan tips untuk pemula." />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 50 50'><circle cx='25' cy='25' r='22' fill='none' stroke='%2337f0a0' stroke-width='2'/><circle cx='20' cy='25' r='3' fill='%2334dffb'/><path d='M26 17.6 A10 10 0 0 1 26 32.4' fill='none' stroke='%2337f0a0' stroke-width='2.4'/><path d='M29.4 14.6 A14 14 0 0 1 29.4 35.4' fill='none' stroke='%2334dffb' stroke-width='2.4'/></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#05090b; --bg2:#070d10; --panel:#0b1418; --panel2:#0e1b20;
+    --line:rgba(80,255,180,.10); --line2:rgba(80,255,180,.22);
+    --ink:#d7ffee; --ink-dim:#6f9488; --ink-soft:#9fc4b6;
+    --acc:#37f0a0; --cyan:#34dffb; --amber:#ffc14d; --red:#ff5d6c; --violet:#b388ff;
+    --shadow:0 18px 50px -20px rgba(0,0,0,.9);
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(52,223,251,.06), transparent 60%),
+      radial-gradient(900px 500px at -10% 110%, rgba(55,240,160,.07), transparent 55%),
+      var(--bg);
+    color:var(--ink);font-family:'JetBrains Mono',ui-monospace,monospace;
+    -webkit-font-smoothing:antialiased;line-height:1.7;font-size:14.5px}
+  .wrap{max-width:1180px;margin:0 auto;padding:22px 24px 80px}
+
+  /* ---------- Header ---------- */
+  header.top{display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+    border:1px solid var(--line2);border-radius:16px;padding:14px 18px;margin-bottom:22px;
+    background:linear-gradient(180deg,var(--panel2),var(--panel));box-shadow:var(--shadow);
+    position:relative;overflow:hidden}
+  header.top::before{content:"";position:absolute;inset:0;
+    background:repeating-linear-gradient(90deg,transparent 0 38px,rgba(55,240,160,.04) 38px 39px);pointer-events:none}
+  .brand{display:flex;align-items:center;gap:14px}
+  .brandmark{position:relative;width:50px;height:50px;border-radius:50%;flex:none;display:grid;place-items:center;
+    background:radial-gradient(circle at 50% 45%,rgba(52,223,251,.12),rgba(5,12,12,.35) 72%);
+    border:1px solid var(--line2);overflow:hidden;
+    box-shadow:0 0 24px -6px rgba(52,223,251,.55), inset 0 0 16px -7px rgba(55,240,160,.7)}
+  .brandmark::after{content:"";position:absolute;inset:-35%;
+    background:conic-gradient(from 0deg,transparent 0 58%,rgba(55,240,160,.32) 78%,rgba(52,223,251,.5) 87%,transparent 93%);
+    animation:sweep 3.8s linear infinite;mix-blend-mode:screen;pointer-events:none}
+  @keyframes sweep{to{transform:rotate(360deg)}}
+  .emblem{position:relative;width:50px;height:50px;z-index:2;filter:drop-shadow(0 0 4px rgba(52,223,251,.55))}
+  .emblem .ring{fill:none;stroke:rgba(120,255,210,.30);stroke-width:1}
+  .emblem .core{fill:url(#fluxG)}
+  .emblem .arc{fill:none;stroke:url(#fluxG);stroke-width:2.1;stroke-linecap:round;
+    transform-box:view-box;transform-origin:20px 25px;animation:emit 2.4s ease-out infinite}
+  .emblem .a1{animation-delay:0s}.emblem .a2{animation-delay:.45s}.emblem .a3{animation-delay:.9s}
+  @keyframes emit{0%{opacity:0;transform:scale(.55)}28%{opacity:1}100%{opacity:0;transform:scale(1.14)}}
+  @media(prefers-reduced-motion:reduce){.brandmark::after,.emblem .arc{animation:none}.emblem .arc{opacity:.85}}
+  .wordmark{font-family:'Chakra Petch',sans-serif;font-weight:700;letter-spacing:1.4px;font-size:23px;line-height:.95;display:flex}
+  .wordmark .sky{color:var(--ink)}
+  .wordmark .flx{background:linear-gradient(95deg,var(--acc),var(--cyan));-webkit-background-clip:text;background-clip:text;color:transparent}
+  .brand .sub{font-size:9px;letter-spacing:3px;color:var(--ink-dim);margin-top:7px}
+  .doc-badge{font-family:'Chakra Petch';font-size:11px;letter-spacing:2px;color:var(--amber);
+    border:1px solid rgba(255,193,77,.4);background:rgba(255,193,77,.06);border-radius:999px;padding:5px 12px}
+  .open-sim{margin-left:auto;display:inline-flex;align-items:center;gap:8px;font-family:'Chakra Petch';
+    font-size:12.5px;letter-spacing:1px;font-weight:600;text-decoration:none;color:#04120c;
+    background:linear-gradient(95deg,var(--acc),var(--cyan));border-radius:10px;padding:10px 16px;
+    box-shadow:0 8px 22px -10px var(--acc);transition:.16s}
+  .open-sim:hover{transform:translateY(-1px);box-shadow:0 12px 28px -10px var(--acc)}
+
+  /* ---------- Hero ---------- */
+  .hero{border:1px solid var(--line2);border-radius:16px;padding:26px 26px;margin-bottom:24px;
+    background:linear-gradient(180deg,var(--panel2),var(--panel));box-shadow:var(--shadow)}
+  .hero h1{font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:28px;line-height:1.2;margin:0 0 10px}
+  .hero p{color:var(--ink-soft);max-width:760px;margin:0 0 6px;font-size:15px}
+  .hero .kbd{color:var(--cyan)}
+
+  /* ---------- Layout with sticky TOC ---------- */
+  .layout{display:grid;grid-template-columns:230px minmax(0,1fr);gap:30px;align-items:start}
+  nav.toc{position:sticky;top:18px;border:1px solid var(--line2);border-radius:14px;
+    background:linear-gradient(180deg,var(--panel2),var(--panel));padding:16px 14px;box-shadow:var(--shadow)}
+  nav.toc .h{font-size:9px;letter-spacing:2.5px;color:var(--ink-dim);text-transform:uppercase;margin:0 0 10px}
+  nav.toc a{display:block;color:var(--ink-soft);text-decoration:none;font-size:12.5px;padding:5px 9px;
+    border-radius:7px;border-left:2px solid transparent;transition:.13s;line-height:1.4}
+  nav.toc a:hover{background:rgba(55,240,160,.07);color:var(--ink)}
+  nav.toc a.active{background:rgba(55,240,160,.10);color:var(--acc);border-left-color:var(--acc)}
+  nav.toc a small{color:var(--ink-dim);font-size:10px}
+  @media(max-width:880px){.layout{grid-template-columns:1fr}nav.toc{position:static;margin-bottom:8px}
+    nav.toc .links{display:flex;flex-wrap:wrap;gap:4px}nav.toc a{border-left:none}}
+
+  /* ---------- Content ---------- */
+  main{min-width:0}
+  section.doc{border:1px solid var(--line2);border-radius:16px;padding:22px 24px;margin-bottom:18px;
+    background:linear-gradient(180deg,var(--panel2),var(--panel));box-shadow:var(--shadow);scroll-margin-top:18px}
+  section.doc h2{font-family:'Chakra Petch',sans-serif;font-weight:700;font-size:20px;letter-spacing:.5px;
+    margin:0 0 4px;display:flex;align-items:center;gap:11px}
+  section.doc h2 .num{font-size:12px;font-family:'JetBrains Mono';color:#04120c;background:var(--acc);
+    width:26px;height:26px;border-radius:8px;display:grid;place-items:center;flex:none;font-weight:700}
+  section.doc h3{font-family:'Chakra Petch',sans-serif;font-weight:600;font-size:15.5px;letter-spacing:.4px;
+    margin:22px 0 6px;color:var(--ink);display:flex;align-items:center;gap:9px}
+  section.doc h3 .dot{width:8px;height:8px;border-radius:2px;transform:rotate(45deg);flex:none}
+  section.doc p{color:var(--ink-soft);margin:8px 0}
+  section.doc .lead{color:var(--ink-dim);font-size:13px;margin:0 0 6px}
+  section.doc b,section.doc strong{color:var(--ink)}
+  section.doc a{color:var(--cyan);text-decoration:none;border-bottom:1px dotted rgba(52,223,251,.4)}
+  section.doc a:hover{border-bottom-style:solid}
+  ul.clean{margin:8px 0;padding-left:20px}
+  ul.clean li{margin:6px 0;color:var(--ink-soft)}
+  ul.clean li::marker{color:var(--acc)}
+  ol.steps{counter-reset:s;list-style:none;padding:0;margin:12px 0}
+  ol.steps li{position:relative;padding:10px 0 10px 44px;border-bottom:1px dashed var(--line);color:var(--ink-soft)}
+  ol.steps li:last-child{border-bottom:none}
+  ol.steps li::before{counter-increment:s;content:counter(s);position:absolute;left:0;top:9px;
+    width:28px;height:28px;border-radius:8px;background:rgba(52,223,251,.14);color:var(--cyan);
+    border:1px solid var(--cyan);display:grid;place-items:center;font-weight:700;font-size:13px}
+
+  /* analogy / callout boxes */
+  .call{border-radius:11px;padding:13px 15px;margin:14px 0;font-size:13.5px;line-height:1.6;
+    border:1px solid var(--line2);background:rgba(255,255,255,.02)}
+  .call .tag{display:inline-block;font-family:'Chakra Petch';font-size:10px;letter-spacing:1.5px;
+    text-transform:uppercase;margin-bottom:4px;font-weight:700}
+  .call.analogy{border-color:rgba(52,223,251,.35);background:rgba(52,223,251,.05)}
+  .call.analogy .tag{color:var(--cyan)}
+  .call.tip{border-color:rgba(55,240,160,.35);background:rgba(55,240,160,.05)}
+  .call.tip .tag{color:var(--acc)}
+  .call.warn{border-color:rgba(255,193,77,.40);background:rgba(255,193,77,.05)}
+  .call.warn .tag{color:var(--amber)}
+  .call.note{border-color:rgba(179,136,255,.35);background:rgba(179,136,255,.05)}
+  .call.note .tag{color:var(--violet)}
+
+  /* tables */
+  .tbl{width:100%;border-collapse:collapse;margin:14px 0;font-size:12.5px;overflow:hidden;border-radius:10px;
+    border:1px solid var(--line2)}
+  .tbl th,.tbl td{text-align:left;padding:9px 12px;border-bottom:1px solid var(--line)}
+  .tbl th{background:rgba(55,240,160,.07);color:var(--ink);font-family:'Chakra Petch';font-weight:600;
+    letter-spacing:.5px;font-size:11.5px;text-transform:uppercase}
+  .tbl tr:last-child td{border-bottom:none}
+  .tbl td:first-child{color:var(--ink);font-weight:500}
+  .tbl td b{color:var(--acc)}
+  .tbl .pos{color:var(--acc)}.tbl .neg{color:var(--red)}
+  .scroll-x{overflow-x:auto}
+
+  code{background:rgba(255,255,255,.06);border:1px solid var(--line);border-radius:5px;
+    padding:1px 6px;font-size:12.5px;color:var(--cyan)}
+  .pill{display:inline-block;font-size:11px;letter-spacing:.5px;border-radius:6px;padding:1px 8px;
+    border:1px solid var(--line2);color:var(--ink-soft)}
+  .pill.g{color:var(--acc);border-color:rgba(55,240,160,.4)}
+  .pill.c{color:var(--cyan);border-color:rgba(52,223,251,.4)}
+  .pill.a{color:var(--amber);border-color:rgba(255,193,77,.4)}
+  .pill.r{color:var(--red);border-color:rgba(255,93,108,.4)}
+  .pill.v{color:var(--violet);border-color:rgba(179,136,255,.4)}
+
+  .backtop{display:inline-block;margin-top:6px;font-size:11px;color:var(--ink-dim);text-decoration:none}
+  .backtop:hover{color:var(--acc)}
+
+  footer{margin-top:26px;border-top:1px solid var(--line);padding-top:16px;color:var(--ink-dim);font-size:11.5px;line-height:1.7}
+  footer a{color:var(--cyan);text-decoration:none}
+  .disclaimer{margin-top:13px;font-size:11px;color:var(--ink-dim);line-height:1.65;
+    border:1px solid var(--line);border-radius:10px;padding:11px 13px;background:rgba(255,193,77,.04)}
+  .disclaimer b{color:var(--amber)}
+  .cta{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;
+    border:1px solid var(--line2);border-radius:16px;padding:20px 24px;margin:6px 0 0;
+    background:linear-gradient(110deg,rgba(55,240,160,.08),rgba(52,223,251,.05))}
+  .cta .t{font-family:'Chakra Petch';font-weight:700;font-size:17px}
+  .cta p{margin:3px 0 0;color:var(--ink-soft);font-size:12.5px}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <!-- ============ HEADER ============ -->
+  <header class="top">
+    <div class="brand">
+      <div class="brandmark" aria-hidden="true">
+        <svg class="emblem" viewBox="0 0 50 50">
+          <defs><linearGradient id="fluxG" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0" stop-color="#34dffb"/><stop offset="1" stop-color="#37f0a0"/>
+          </linearGradient></defs>
+          <circle class="ring" cx="25" cy="25" r="22"/>
+          <circle class="core" cx="20" cy="25" r="2.6"/>
+          <path class="arc a1" d="M24.0 20.5 A 6 6 0 0 1 24.0 29.5"/>
+          <path class="arc a2" d="M26.7 17.6 A 10 10 0 0 1 26.7 32.4"/>
+          <path class="arc a3" d="M29.4 14.6 A 14 14 0 0 1 29.4 35.4"/>
+        </svg>
+      </div>
+      <div>
+        <div class="wordmark"><span class="sky">SKY</span><span class="flx">FLUX</span></div>
+        <div class="sub">PANDUAN LENGKAP &amp; GLOSARIUM</div>
+      </div>
+    </div>
+    <span class="doc-badge">📖 DOKUMENTASI</span>
+    <a class="open-sim" href="index.html">▶ Buka Simulator</a>
+  </header>
+
+  <!-- ============ HERO ============ -->
+  <div class="hero">
+    <h1>Panduan SkyFlux Signal Simulator</h1>
+    <p>Dokumentasi ini menjelaskan <b>semua bagian</b> simulator dengan bahasa sederhana — cocok untuk yang
+      baru kenal FPV. Tidak perlu latar belakang teknik radio. Setiap istilah dijelaskan pakai analogi
+      sehari-hari, lengkap dengan glosarium di bagian akhir.</p>
+    <p class="lead">Waktu baca ± 12 menit · Bisa dibaca acak — pakai daftar isi di samping untuk lompat ke topik.</p>
+  </div>
+
+  <!-- ============ LAYOUT ============ -->
+  <div class="layout">
+
+    <!-- TOC -->
+    <nav class="toc" aria-label="Daftar isi">
+      <p class="h">Daftar Isi</p>
+      <div class="links">
+        <a href="#apa-itu" class="active">1 · Apa itu SkyFlux?</a>
+        <a href="#mulai">2 · Mulai dalam 1 menit</a>
+        <a href="#layar">3 · Mengenal layar</a>
+        <a href="#preset">4 · Preset antena drone</a>
+        <a href="#tx">5 · Antena drone (TX)</a>
+        <a href="#video">6 · Sistem video</a>
+        <a href="#rx">7 · Antena goggles (RX)</a>
+        <a href="#env">8 · Lingkungan &amp; multipath</a>
+        <a href="#install">9 · Instalasi &amp; loss</a>
+        <a href="#budget">10 · Link budget</a>
+        <a href="#glosarium">11 · Glosarium istilah</a>
+        <a href="#latihan">12 · Latihan &amp; tips</a>
+        <a href="#faq">13 · FAQ</a>
+      </div>
+    </nav>
+
+    <!-- CONTENT -->
+    <main>
+
+      <!-- 1 -->
+      <section class="doc" id="apa-itu">
+        <h2><span class="num">1</span> Apa itu SkyFlux?</h2>
+        <p><b>SkyFlux Signal Simulator</b> adalah laboratorium virtual untuk memahami bagaimana sinyal video
+          drone FPV (frekuensi <b>5,8&nbsp;GHz</b>) berjalan dari <b>drone</b> ke <b>goggles</b> (kacamata) pilot.
+          Kamu bisa memutar-mutar pengaturan antena dan kondisi lapangan, lalu langsung melihat apakah
+          gambar di goggles tetap jernih atau malah "putus".</p>
+
+        <div class="call analogy">
+          <span class="tag">Analogi</span>
+          Bayangkan sinyal seperti <b>melempar bola</b> dari drone ke kamu. Makin jauh, bola makin lemah.
+          Antena yang bagus = lemparan yang terarah dan kuat. Pepohonan, badan kamu, atau antena yang miring =
+          penghalang yang membuat bola tidak sampai dengan baik. Simulator ini menunjukkan seberapa "kuat bola
+          itu sampai" dalam satuan teknis, tapi dengan tampilan yang mudah dilihat.
+        </div>
+
+        <h3><span class="dot" style="background:var(--acc)"></span>Untuk siapa?</h3>
+        <ul class="clean">
+          <li><b>Pemula FPV</b> yang ingin paham kenapa video kadang jernih, kadang pecah.</li>
+          <li>Yang mau <b>memilih antena</b> tanpa harus beli dulu — bandingkan 5 antena populer di sini.</li>
+          <li>Siapa pun yang penasaran dengan <b>fisika sinyal radio</b> tanpa rumus yang bikin pusing.</li>
+        </ul>
+
+        <div class="call note">
+          <span class="tag">Penting</span>
+          Simulator ini bersifat <b>edukatif</b>. Angka-angkanya memakai rumus fisika nyata (FSPL, two-ray,
+          diversity), jadi <b>tren-nya akurat</b> — kalau di simulator sinyal membaik, di dunia nyata juga akan
+          membaik. Tapi angka mutlaknya tetap perkiraan karena lapangan asli jauh lebih rumit.
+        </div>
+        <a class="backtop" href="#apa-itu">↑ kembali ke atas</a>
+      </section>
+
+      <!-- 2 -->
+      <section class="doc" id="mulai">
+        <h2><span class="num">2</span> Mulai dalam 1 menit</h2>
+        <p class="lead">Tidak perlu setup apa pun. Buka simulator, lalu coba ini:</p>
+        <ol class="steps">
+          <li><b>Seret drone</b> di layar utama (lingkaran dengan ikon drone). Geser menjauh → lihat angka
+            <b>LINK MARGIN</b> di pojok kanan atas mengecil. Geser mendekat → membesar.</li>
+          <li>Klik salah satu <b>preset antena</b> (mis. <i>TrueRC Singularity</i>) untuk memuat spesifikasi
+            antena nyata. Perhatikan pola pancaran (bentuk "donat" hijau) berubah.</li>
+          <li>Pilih <b>sistem video</b> berbeda (Analog vs DJI O4) dan lihat tampilan "GOGGLES FEED" di kiri atas
+            berubah dari berpasir menjadi tajam — atau malah freeze.</li>
+          <li>Coba preset lingkungan <b>"Balik Pohon"</b> dan amati sinyal anjlok. Itulah kenapa pepohonan
+            adalah musuh sinyal 5,8&nbsp;GHz.</li>
+          <li>Klik ikon <b>?</b> di sebelah kontrol mana pun untuk penjelasan singkat langsung di simulator.</li>
+        </ol>
+        <div class="call tip">
+          <span class="tag">Tips</span>
+          Di pojok kanan atas ada tombol <span class="pill">ID</span> / <span class="pill">EN</span> untuk
+          ganti bahasa Indonesia / Inggris. Semua teks dan tooltip ikut berubah.
+        </div>
+        <a class="backtop" href="#apa-itu">↑ kembali ke atas</a>
+      </section>
+
+      <!-- 3 -->
+      <section class="doc" id="layar">
+        <h2><span class="num">3</span> Mengenal layar utama</h2>
+        <p>Layout dibagi tiga: panel kontrol kiri, <b>arena live</b> di tengah, dan panel kontrol kanan.
+          Arena tengah adalah "pertunjukan" utamanya.</p>
+
+        <h3><span class="dot" style="background:var(--cyan)"></span>Arena radar (tengah)</h3>
+        <ul class="clean">
+          <li><b>Ikon goggles</b> di kiri bawah = posisi kamu (pilot).</li>
+          <li><b>Ikon drone</b> = pesawatmu. <b>Seret</b> untuk mengubah jarak &amp; sudut ketinggian.</li>
+          <li>Lingkaran-lingkaran (100&nbsp;m, 10&nbsp;km, 20&nbsp;km) = penanda jarak (skala logaritmik).</li>
+          <li><b>Bentuk "donat" hijau</b> di sekitar drone = pola pancaran antena (ke arah mana energi terkuat).</li>
+          <li>Titik-titik bergerak antara drone &amp; goggles = gelombang sinyal. Warnanya ikut kualitas link.</li>
+        </ul>
+
+        <h3><span class="dot" style="background:var(--acc)"></span>Panel HUD (pojok kanan atas arena)</h3>
+        <div class="scroll-x"><table class="tbl">
+          <tr><th>Tampilan</th><th>Arti</th></tr>
+          <tr><td><b>LINK MARGIN</b></td><td>Angka utama. Berapa "dB" sinyal lebih kuat dari ambang minimum. Positif besar = aman, mendekati nol = bahaya, negatif = putus.</td></tr>
+          <tr><td><b>SINR</b></td><td>Kualitas sinyal dibanding gangguan+noise. Penentu jernih/tidaknya video digital.</td></tr>
+          <tr><td><b>RSSI</b></td><td>Kekuatan sinyal mentah yang diterima (dalam dBm). Makin mendekati nol makin kuat (mis. −70 lebih kuat dari −95).</td></tr>
+          <tr><td><b>LQ</b></td><td>Link Quality, 0–100%. Versi sederhana "berapa persen sinyal sehat".</td></tr>
+          <tr><td><b>Status</b></td><td><span class="pill g">◉ LINK PRIMA</span> <span class="pill g">◉ STABIL</span> <span class="pill a">◐ MARGINAL</span> <span class="pill r">◯ PUTUS</span></td></tr>
+        </table></div>
+
+        <h3><span class="dot" style="background:var(--violet)"></span>Goggles Feed (pojok kiri atas arena)</h3>
+        <p>Simulasi <b>apa yang benar-benar kamu lihat</b> di goggles. Saat sinyal bagus → tajam. Saat lemah →
+          analog jadi berpasir/"semutan", sedangkan digital (DJI/HDZero) tetap tajam lalu tiba-tiba
+          <b>freeze/macet</b> begitu melewati batas (efek "cliff").</p>
+        <a class="backtop" href="#apa-itu">↑ kembali ke atas</a>
+      </section>
+
+      <!-- 4 -->
+      <section class="doc" id="preset">
+        <h2><span class="num">4</span> Preset antena drone (VTX)</h2>
+        <p>Tombol-tombol ini memuat spesifikasi <b>resmi</b> dari 5 antena drone populer, supaya kamu bisa
+          membandingkannya secara adil. Setelah dimuat, kamu tetap bisa mengubah nilai manual.</p>
+        <div class="scroll-x"><table class="tbl">
+          <tr><th>Antena</th><th>Gain</th><th>Efisiensi</th><th>SWR</th><th>Freq tengah</th><th>Bandwidth</th></tr>
+          <tr><td>Foxeer Lollipop 4+ <span class="pill a">*</span></td><td>2,6 dBi</td><td>80%</td><td>1,30</td><td>5800 MHz</td><td>400 MHz</td></tr>
+          <tr><td>iFlight Albatross V2.1</td><td>2,95 dBi</td><td>66,8%</td><td>1,50</td><td>5650 MHz</td><td>700 MHz</td></tr>
+          <tr><td>TrueRC Singularity</td><td>1,9 dBi</td><td><b>99%</b></td><td>1,50</td><td>5800 MHz</td><td>400 MHz</td></tr>
+          <tr><td>GEPRC Momoda2</td><td>2,45 dBi</td><td>85%</td><td>1,43</td><td>5650 MHz</td><td>700 MHz</td></tr>
+          <tr><td>Sequre 5.8G CP <span class="pill a">*</span></td><td>2,0 dBi</td><td>70%</td><td>1,50</td><td>5762 MHz</td><td>325 MHz</td></tr>
+        </table></div>
+        <div class="call note"><span class="tag">Catatan</span>
+          Tanda <span class="pill a">*</span> berarti nilai efisiensi adalah <b>estimasi</b> (tidak
+          dipublikasikan resmi oleh pabrikan). Pelajaran penting: gain tinggi belum tentu menang — TrueRC
+          gain-nya paling rendah tapi efisiensinya 99%, sering jadi pilihan favorit.</div>
+        <a class="backtop" href="#apa-itu">↑ kembali ke atas</a>
+      </section>
+
+      <!-- 5 -->
+      <section class="doc" id="tx">
+        <h2><span class="num">5</span> Antena drone · TX (pemancar)</h2>
+        <p class="lead">"TX" = transmitter (pemancar). Inilah antena di drone yang menyiarkan video.</p>
+
+        <h3><span class="dot" style="background:var(--acc)"></span>Gain <span class="pill">satuan: dBi</span></h3>
+        <p>Seberapa <b>fokus</b> energi antena ke satu arah. Bukan berarti "lebih bertenaga" — energinya sama,
+          hanya diarahkan.</p>
+        <div class="call analogy"><span class="tag">Analogi</span>
+          Gain seperti <b>senter vs lampu bohlam</b>. Bohlam (gain rendah) menerangi segala arah merata.
+          Senter (gain tinggi) jauh lebih terang ke depan, tapi sisi-sisinya gelap. Untuk drone yang manuver
+          ke segala arah, omni dengan gain <b>1–3 dBi</b> paling ideal.</div>
+
+        <h3><span class="dot" style="background:var(--acc)"></span>Efisiensi radiasi <span class="pill">satuan: %</span></h3>
+        <p>Persen daya yang benar-benar <b>terpancar jadi gelombang</b>. Sisanya berubah jadi panas dan terbuang.</p>
+        <ul class="clean">
+          <li><b>≥80%</b> = bagus. <b>99%</b> = sangat baik (TrueRC).</li>
+          <li>Antena murah atau rusak bisa di bawah 60% — banyak daya terbuang percuma.</li>
+        </ul>
+
+        <h3><span class="dot" style="background:var(--acc)"></span>SWR / VSWR <span class="pill">ideal &lt; 1,5</span></h3>
+        <p>Singkatan dari <i>Standing Wave Ratio</i>. Mengukur seberapa <b>cocok</b> antena dengan radio.</p>
+        <div class="call analogy"><span class="tag">Analogi</span>
+          Seperti <b>selang air</b>. Kalau ujung selang pas, air mengalir lancar (SWR 1,0). Kalau ada
+          penyumbatan, sebagian air <b>memantul balik</b> ke pompa — bikin panas dan boros. SWR tinggi =
+          banyak daya memantul balik ke pemancar.</div>
+        <div class="call warn"><span class="tag">Awas</span>
+          SWR tinggi (mis. &gt; 2,0) tidak cuma melemahkan sinyal — panas pantulannya bisa
+          <b>merusak VTX</b> (pemancar video) kamu.</div>
+
+        <h3><span class="dot" style="background:var(--acc)"></span>Freq tengah &amp; Bandwidth <span class="pill">satuan: MHz</span></h3>
+        <p><b>Freq tengah</b> = titik frekuensi di mana antena paling sehat. <b>Bandwidth</b> = rentang
+          frekuensi di sekitarnya yang masih bagus. Makin lebar bandwidth, makin "toleran" antena kalau
+          channel yang kamu pakai jauh dari titik tengahnya.</p>
+        <div class="call tip"><span class="tag">Tips</span>
+          Pastikan <b>channel video</b> yang kamu pakai berada di dalam bandwidth antena. Kalau channel jauh
+          di luar (mis. antena 5800 tapi terbang di 5645), sinyal rugi besar (lihat baris "Off-band TX" di
+          link budget).</div>
+
+        <h3><span class="dot" style="background:var(--acc)"></span>Polarisasi TX <span class="pill c">LHCP / RHCP / Linear</span></h3>
+        <p>Arah <b>putaran</b> gelombang. Ini SANGAT penting dan sering jadi penyebab sinyal jelek.</p>
+        <div class="call analogy"><span class="tag">Analogi</span>
+          Bayangkan <b>ulir sekrup</b>. LHCP = ulir kiri, RHCP = ulir kanan. Mur (goggles) harus cocok dengan
+          baut (drone). Kalau drone LHCP tapi goggles RHCP → sinyal anjlok ~<b>25 dB</b> (hampir putus total),
+          padahal antenanya bagus!</div>
+        <ul class="clean">
+          <li><b>LHCP / RHCP</b> (circular) = tahan pantulan, pilihan umum FPV. <b>Wajib sama</b> di TX &amp; RX.</li>
+          <li><b>Linear</b> = netral, tapi rugi 3 dB saat menerima sinyal circular.</li>
+        </ul>
+        <a class="backtop" href="#apa-itu">↑ kembali ke atas</a>
+      </section>
+
+      <!-- 6 -->
+      <section class="doc" id="video">
+        <h2><span class="num">6</span> Sistem video</h2>
+        <p>Memilih jenis sistem transmisi video. Tiap sistem punya karakter berbeda dalam menghadapi sinyal lemah.</p>
+        <div class="scroll-x"><table class="tbl">
+          <tr><th>Sistem</th><th>Jenis</th><th>SINR minimum</th><th>Latensi</th><th>Karakter saat sinyal turun</th></tr>
+          <tr><td>Analog</td><td>Analog</td><td>~6 dB</td><td>~30 ms</td><td>Berpasir/"semutan" perlahan — masih bisa dilihat samar.</td></tr>
+          <tr><td>HDZero</td><td>Digital</td><td>~10 dB</td><td><b>~18 ms</b></td><td>Tajam, lalu pecah-pecah lalu freeze ("cliff" sempit).</td></tr>
+          <tr><td>Walksnail</td><td>Digital</td><td>~12 dB</td><td>~28 ms</td><td>Tajam, lalu freeze cukup mendadak.</td></tr>
+          <tr><td>DJI O4</td><td>Digital</td><td>~13 dB</td><td>~35 ms</td><td>Paling tajam, tapi cliff paling tajam — sekali putus langsung freeze.</td></tr>
+        </table></div>
+        <div class="call analogy"><span class="tag">Analogi: "cliff" digital</span>
+          Analog seperti <b>radio AM</b> — makin jauh makin berisik tapi suaranya masih nyangkut.
+          Digital seperti <b>streaming HD</b> — tajam sempurna sampai satu titik, lalu langsung
+          <b>buffering/freeze</b>. Tidak ada "agak jelek"; entah bagus, entah beku.</div>
+        <div class="call tip"><span class="tag">Tips</span>
+          Untuk <b>jarak jauh / di batas sinyal</b>, analog sering lebih "aman" karena turun perlahan.
+          Untuk <b>kualitas gambar maksimal di jarak aman</b>, digital menang telak.</div>
+        <a class="backtop" href="#apa-itu">↑ kembali ke atas</a>
+      </section>
+
+      <!-- 7 -->
+      <section class="doc" id="rx">
+        <h2><span class="num">7</span> Antena goggles · RX (penerima)</h2>
+        <p class="lead">"RX" = receiver (penerima). Goggles modern biasanya punya <b>dua</b> antena yang bekerja sama.</p>
+
+        <h3><span class="dot" style="background:var(--cyan)"></span>Antena utama (omni)</h3>
+        <p>Menerima dari <b>segala arah</b>. Andalan saat drone ada di samping, di belakang, atau dekat.
+          Punya pengaturan Gain, Efisiensi, SWR, dan Polarisasi yang sama artinya dengan antena TX
+          (lihat <a href="#tx">bagian 5</a>).</p>
+
+        <h3><span class="dot" style="background:var(--cyan)"></span>Antena kedua (patch · directional)</h3>
+        <p>Antena <b>terarah</b> yang fokus ke depan. Jangkauannya jauh, tapi harus diarahkan ke drone.</p>
+        <div class="call analogy"><span class="tag">Analogi</span>
+          Omni = <b>pendengaran telinga</b> (dengar dari mana saja, tapi tidak jauh). Patch = <b>teropong</b>
+          (lihat sangat jauh, tapi hanya ke arah yang ditunjuk). Gabungan keduanya = yang terbaik.</div>
+        <ul class="clean">
+          <li><b>Gain patch</b> tinggi → jangkauan sangat jauh, tapi sudut tangkapnya makin sempit.</li>
+          <li>Tombol <b>"Aktifkan patch"</b> menyalakan/mematikan antena kedua ini.</li>
+        </ul>
+
+        <h3><span class="dot" style="background:var(--violet)"></span>Diversity combiner <span class="pill v">OFF / SEL / MRC</span></h3>
+        <p>Cara goggles <b>memanfaatkan 2 antena</b> sekaligus:</p>
+        <div class="scroll-x"><table class="tbl">
+          <tr><th>Mode</th><th>Cara kerja</th><th>Hasil</th></tr>
+          <tr><td><b>OFF</b></td><td>Pakai 1 antena saja.</td><td>Paling lemah.</td></tr>
+          <tr><td><b>SEL</b> (Select)</td><td>Pilih otomatis antena yang sinyalnya paling kuat saat itu.</td><td>Bagus.</td></tr>
+          <tr><td><b>MRC</b></td><td><i>Maximal-Ratio Combining</i> — menggabungkan sinyal kedua antena jadi satu.</td><td><b>Terbaik</b> (+1–3 dB).</td></tr>
+        </table></div>
+        <div class="call tip"><span class="tag">Tips</span>
+          MRC hampir selalu pilihan terbaik. Itulah kenapa goggles bagus memakai banyak antena —
+          gabungan beberapa "telinga" lebih tahan terhadap sinyal yang naik-turun (fading).</div>
+        <a class="backtop" href="#apa-itu">↑ kembali ke atas</a>
+      </section>
+
+      <!-- 8 -->
+      <section class="doc" id="env">
+        <h2><span class="num">8</span> Lingkungan, Multipath &amp; Noise</h2>
+        <p>Di sinilah "dunia nyata" ikut campur. Ada <b>preset cepat</b> (Sawah, Urban, Balik Pohon, dll) yang
+          mengatur semuanya sekaligus, atau atur manual.</p>
+
+        <h3><span class="dot" style="background:var(--amber)"></span>Geometri</h3>
+        <ul class="clean">
+          <li><b>Jarak drone</b> — makin jauh, sinyal makin lemah mengikuti <i>hukum kuadrat jarak</i>
+            (lihat <a href="#glosarium">FSPL</a>).</li>
+          <li><b>Elevasi</b> — sudut drone di atas horizon. 0° = sejajar mata, 90° = tepat di atas kepalamu.</li>
+          <li><b>Tilt/roll antena</b> — saat drone manuver, antenanya miring → polarisasi tak sejajar → sinyal turun.</li>
+        </ul>
+
+        <h3><span class="dot" style="background:var(--amber)"></span>Lingkungan &amp; interferensi</h3>
+        <div class="scroll-x"><table class="tbl">
+          <tr><th>Kontrol</th><th>Penjelasan sederhana</th></tr>
+          <tr><td><b>Foliage</b> (vegetasi)</td><td>Redaman dari pepohonan/daun, apalagi basah. 5,8 GHz sangat mudah diserap dedaunan.</td></tr>
+          <tr><td><b>Obstacle</b> (knife-edge)</td><td>Penghalang keras seperti bukit/gedung yang memotong sebagian gelombang.</td></tr>
+          <tr><td><b>Multipath severity</b></td><td>Seberapa parah pantulan sinyal. Pantulan bisa menguatkan ATAU menghapus sinyal → naik-turun (fading).</td></tr>
+          <tr><td><b>Interferensi</b></td><td>Sinyal lain di channel sama (WiFi, pilot lain). Makin tinggi, makin susah sinyalmu menonjol.</td></tr>
+          <tr><td><b>Noise figure RX</b></td><td>Seberapa "berisik" penerima goggles itu sendiri. Makin kecil (dB) makin sensitif.</td></tr>
+        </table></div>
+
+        <h3><span class="dot" style="background:var(--amber)"></span>Sakelar khusus</h3>
+        <ul class="clean">
+          <li><b>Pantulan tanah</b> — sinyal mantul dari tanah lalu bertemu sinyal langsung. Bisa menguatkan (+6 dB) atau saling menghapus.</li>
+          <li><b>Body shadow</b> — tubuhmu menghalangi antena saat drone terbang rendah di belakang (potong ~10 dB). Solusinya: putar badan.</li>
+          <li><b>Auto-orbit</b> — drone bergerak otomatis supaya kamu lihat efek perubahan jarak &amp; sudut.</li>
+          <li><b>Auto-roll</b> — drone otomatis memiringkan badan untuk mensimulasikan manuver.</li>
+        </ul>
+
+        <div class="call analogy"><span class="tag">Analogi: multipath</span>
+          Seperti <b>gema di lorong</b>. Suara aslimu (sinyal langsung) bercampur dengan gema dari dinding
+          (pantulan). Kadang gema memperkuat, kadang malah membuat suara "hilang" di titik tertentu.
+          Itulah kenapa video FPV kadang berkedip-kedip walau drone tidak bergerak jauh.</div>
+        <a class="backtop" href="#apa-itu">↑ kembali ke atas</a>
+      </section>
+
+      <!-- 9 -->
+      <section class="doc" id="install">
+        <h2><span class="num">9</span> Instalasi &amp; Loss</h2>
+        <p>Hal-hal kecil saat pemasangan yang sering jadi sumber masalah tersembunyi di lapangan.</p>
+        <ul class="clean">
+          <li><b>Kabel/U.FL TX &amp; RX</b> — setiap kabel menghilangkan sebagian sinyal. Makin panjang/jelek
+            makin rugi. <b>Pendekkan</b> dan pakai kabel berkualitas.</li>
+          <li><b>Karbon dekat antena TX</b> — frame karbon atau baterai yang menempel di antena akan
+            <b>menyerap</b> sinyal dan <b>merusak tuning</b> (detune). Beri jarak.</li>
+        </ul>
+        <div class="call warn"><span class="tag">Awas</span>
+          Banyak pilot mengeluh "antena mahal kok jelek" — padahal masalahnya antena ditempel langsung ke
+          frame karbon atau kabel U.FL terjepit. Coba ubah slider ini dan lihat betapa besar pengaruhnya.</div>
+        <a class="backtop" href="#apa-itu">↑ kembali ke atas</a>
+      </section>
+
+      <!-- 10 -->
+      <section class="doc" id="budget">
+        <h2><span class="num">10</span> Link Budget · Rincian Loss</h2>
+        <p>Ini "buku kas" sinyalmu. Setiap baris menunjukkan <b>berapa dB sinyal ditambah atau dikurangi</b>
+          oleh tiap faktor, dari pemancar sampai jadi SINR akhir.</p>
+        <div class="scroll-x"><table class="tbl">
+          <tr><th>Baris</th><th>Arti</th><th>Efek umum</th></tr>
+          <tr><td>Daya VTX</td><td>Daya pemancar awal (mW → dBm).</td><td class="pos">+ titik awal</td></tr>
+          <tr><td>Gain TX / RX</td><td>Fokus antena pemancar &amp; penerima.</td><td class="pos">+ menambah</td></tr>
+          <tr><td>Efisiensi, SWR, Off-band, Install</td><td>Kerugian di sisi antena &amp; instalasi.</td><td class="neg">− mengurangi</td></tr>
+          <tr><td>Foliage, Obstacle, Body</td><td>Penghalang lingkungan.</td><td class="neg">− mengurangi</td></tr>
+          <tr><td>Multipath (two-ray)</td><td>Efek pantulan tanah.</td><td>± bisa dua arah</td></tr>
+          <tr><td>Path loss (FSPL)</td><td>Kerugian karena jarak — biasanya <b>paling besar</b>.</td><td class="neg">−− besar</td></tr>
+          <tr><td>Polarisasi</td><td>Cocok/tidaknya LHCP/RHCP.</td><td class="neg">− kalau mismatch</td></tr>
+          <tr><td>Diversity gain</td><td>Bonus dari kombinasi 2 antena goggles.</td><td class="pos">+ menambah</td></tr>
+          <tr><td><b>Sinyal diterima (Prx)</b></td><td>Total kekuatan sinyal di goggles (dBm).</td><td>= hasil</td></tr>
+          <tr><td>Noise + interferensi</td><td>Lantai noise yang harus dilampaui sinyal.</td><td class="neg">− pembanding</td></tr>
+          <tr><td><b>SINR</b></td><td><b>Hasil akhir</b> = Prx − noise. Penentu kualitas video.</td><td>= nilai akhir</td></tr>
+        </table></div>
+        <div class="call tip"><span class="tag">Aturan emas</span>
+          Setiap <b>+3 dB ≈ 2× daya</b> (jarak efektif lebih jauh). Setiap <b>−3 dB ≈ setengah daya</b>.
+          Jadi kehilangan 6 dB karena kabel + karbon = membuang <b>3/4</b> sinyalmu.</div>
+        <a class="backtop" href="#apa-itu">↑ kembali ke atas</a>
+      </section>
+
+      <!-- 11 -->
+      <section class="doc" id="glosarium">
+        <h2><span class="num">11</span> Glosarium istilah</h2>
+        <p class="lead">Kamus singkat semua istilah teknis yang muncul di simulator.</p>
+        <div class="scroll-x"><table class="tbl">
+          <tr><th>Istilah</th><th>Arti sederhana</th></tr>
+          <tr><td><b>dB</b> (desibel)</td><td>Cara mengukur perbandingan/perubahan. +3 dB = 2× lipat, −3 dB = setengah. Skala "kelipatan", bukan tambah biasa.</td></tr>
+          <tr><td><b>dBi</b></td><td>Satuan gain antena (dibanding antena ideal "isotropic"). Makin besar = makin fokus.</td></tr>
+          <tr><td><b>dBm</b></td><td>Satuan kekuatan sinyal absolut. −70 dBm lebih kuat dari −95 dBm.</td></tr>
+          <tr><td><b>VTX</b></td><td>Video Transmitter — pemancar video di drone.</td></tr>
+          <tr><td><b>TX / RX</b></td><td>Transmitter (pemancar) / Receiver (penerima).</td></tr>
+          <tr><td><b>Gain</b></td><td>Seberapa fokus antena mengarahkan energi. Bukan menambah daya, hanya mengarahkan.</td></tr>
+          <tr><td><b>Efisiensi</b></td><td>% daya yang jadi gelombang (sisanya jadi panas).</td></tr>
+          <tr><td><b>SWR / VSWR</b></td><td>Seberapa cocok antena &amp; radio. 1,0 sempurna; tinggi = daya memantul balik.</td></tr>
+          <tr><td><b>Polarisasi (LHCP/RHCP)</b></td><td>Arah putaran gelombang (kiri/kanan). TX &amp; RX harus sama, kalau tidak rugi ~25 dB.</td></tr>
+          <tr><td><b>Bandwidth</b></td><td>Rentang frekuensi di mana antena tetap bekerja baik.</td></tr>
+          <tr><td><b>FSPL</b></td><td>Free-Space Path Loss — kerugian sinyal akibat jarak di ruang terbuka. Biasanya kerugian terbesar.</td></tr>
+          <tr><td><b>SINR</b></td><td>Signal-to-Interference-plus-Noise Ratio. Kekuatan sinyal dibanding gangguan+noise. Penentu kualitas video digital.</td></tr>
+          <tr><td><b>RSSI</b></td><td>Received Signal Strength Indicator — kekuatan sinyal mentah yang diterima.</td></tr>
+          <tr><td><b>LQ</b></td><td>Link Quality — kualitas link 0–100%.</td></tr>
+          <tr><td><b>Noise floor</b></td><td>"Lantai" kebisingan dasar. Sinyal harus di atas ini agar bisa terbaca.</td></tr>
+          <tr><td><b>Multipath</b></td><td>Sinyal sampai lewat beberapa jalur (langsung + pantulan). Bisa menguatkan/menghapus.</td></tr>
+          <tr><td><b>Two-ray</b></td><td>Model multipath sederhana: 1 sinyal langsung + 1 pantulan tanah.</td></tr>
+          <tr><td><b>Fading</b></td><td>Sinyal naik-turun sesaat akibat multipath/pergerakan.</td></tr>
+          <tr><td><b>Diversity</b></td><td>Memakai &gt;1 antena untuk melawan fading (SEL/MRC).</td></tr>
+          <tr><td><b>Knife-edge</b></td><td>Pembelokan gelombang di tepi penghalang tajam (bukit/gedung).</td></tr>
+          <tr><td><b>Off-band</b></td><td>Channel di luar bandwidth antena → rugi sinyal.</td></tr>
+          <tr><td><b>Detune</b></td><td>Tuning antena rusak/bergeser karena benda di dekatnya (karbon/baterai).</td></tr>
+          <tr><td><b>Cliff</b></td><td>"Tebing" digital — gambar tajam lalu tiba-tiba freeze begitu lewat ambang.</td></tr>
+        </table></div>
+        <a class="backtop" href="#apa-itu">↑ kembali ke atas</a>
+      </section>
+
+      <!-- 12 -->
+      <section class="doc" id="latihan">
+        <h2><span class="num">12</span> Latihan &amp; tips praktis</h2>
+        <p class="lead">Eksperimen kecil untuk benar-benar "merasakan" tiap konsep:</p>
+
+        <h3><span class="dot" style="background:var(--acc)"></span>Latihan 1 — Polarisasi mismatch</h3>
+        <p>Set Polarisasi TX = <b>LHCP</b>, lalu ubah Polarisasi omni goggles ke <b>RHCP</b>. Lihat sinyal anjlok
+          drastis. Inilah kesalahan paling umum di FPV.</p>
+
+        <h3><span class="dot" style="background:var(--acc)"></span>Latihan 2 — Gain vs jarak</h3>
+        <p>Aktifkan patch goggles, naikkan <b>Gain patch</b> ke maksimal. Drone di depan → sinyal jauh lebih
+          kuat. Tapi geser drone ke samping → sinyal hilang karena patch "tidak melihat" ke sana.</p>
+
+        <h3><span class="dot" style="background:var(--acc)"></span>Latihan 3 — Diversity menyelamatkan</h3>
+        <p>Pilih preset <b>Urban Multipath</b>, set diversity ke <b>OFF</b> dan amati sinyal berkedip.
+          Ubah ke <b>MRC</b> → jauh lebih stabil. Itulah nilai 2 antena.</p>
+
+        <div class="call tip"><span class="tag">Tips dunia nyata</span>
+          <ul class="clean" style="margin:6px 0 0">
+            <li>Selalu samakan polarisasi TX &amp; RX (LHCP-LHCP atau RHCP-RHCP).</li>
+            <li>Jauhkan antena dari frame karbon &amp; baterai.</li>
+            <li>Pakai kabel U.FL sependek mungkin, periksa konektor.</li>
+            <li>Untuk jarak jauh: tambah patch + diversity MRC, dan arahkan tubuh ke drone.</li>
+            <li>Channel video harus di dalam bandwidth antena.</li>
+          </ul></div>
+        <a class="backtop" href="#apa-itu">↑ kembali ke atas</a>
+      </section>
+
+      <!-- 13 -->
+      <section class="doc" id="faq">
+        <h2><span class="num">13</span> Pertanyaan umum (FAQ)</h2>
+
+        <h3><span class="dot" style="background:var(--cyan)"></span>Apakah ini menghitung jangkauan asli drone saya?</h3>
+        <p>Tidak persis. Ini alat <b>edukatif</b> — bagus untuk memahami <b>tren</b> ("kalau begini, sinyal
+          membaik/memburuk"), tapi angka mutlaknya perkiraan. Lapangan asli punya terlalu banyak variabel.</p>
+
+        <h3><span class="dot" style="background:var(--cyan)"></span>Kenapa fokus di 5,8 GHz?</h3>
+        <p>Karena itu frekuensi video FPV paling umum. Sifatnya: bandwidth besar (gambar jernih) tapi mudah
+          terhalang benda &amp; dedaunan — makanya antena &amp; pemasangan sangat berpengaruh.</p>
+
+        <h3><span class="dot" style="background:var(--cyan)"></span>Perlu internet untuk menjalankannya?</h3>
+        <p>Tidak. Setelah halaman terbuka, simulator berjalan <b>sepenuhnya di browser</b>, bahkan offline
+          (hanya font yang diambil online; tanpa font pun tetap jalan).</p>
+
+        <h3><span class="dot" style="background:var(--cyan)"></span>Datanya dari mana?</h3>
+        <p>Spesifikasi antena dari situs resmi <b>iFlight, TrueRC, GEPRC, Sequre, Foxeer</b>. Prinsip RF
+          (FSPL, two-ray, diversity) mengacu pada panduan <b>Oscar Liang</b> &amp; dokumentasi <b>ExpressLRS</b>.</p>
+
+        <div class="cta">
+          <div>
+            <div class="t">Siap bereksperimen?</div>
+            <p>Buka simulator dan coba semua yang baru kamu pelajari.</p>
+          </div>
+          <a class="open-sim" href="index.html">▶ Buka Simulator</a>
+        </div>
+        <a class="backtop" href="#apa-itu">↑ kembali ke atas</a>
+      </section>
+
+      <footer>
+        <b style="color:var(--ink)">SkyFlux Signal Simulator</b> · Panduan ini bersifat edukatif.
+        Sumber spec antena: situs resmi iFlight, TrueRC, GEPRC, Sequre, Foxeer.
+        Prinsip RF: panduan Oscar Liang &amp; ExpressLRS. &nbsp;
+        <a href="index.html">← Kembali ke simulator</a>
+        <div class="disclaimer">
+          <b>⚠ Disclaimer:</b> SkyFlux adalah alat edukasi &amp; simulasi. Hasil perhitungan merupakan estimasi
+          berbasis model RF yang disederhanakan dan dapat berbeda dari kondisi terbang nyata (cuaca, medan,
+          regulasi daya/frekuensi, perangkat). Bukan jaminan performa, bukan saran teknis resmi, dan tidak
+          berafiliasi dengan merek antena/video mana pun. Gunakan sebagai bahan belajar — selalu patuhi regulasi
+          frekuensi &amp; daya yang berlaku di wilayah Anda dan terbang dengan aman.
+        </div>
+      </footer>
+
+    </main>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* Highlight active TOC item while scrolling */
+(function(){
+  const links = [...document.querySelectorAll('nav.toc a')];
+  const map = new Map();
+  links.forEach(a=>{ const id=a.getAttribute('href').slice(1); const el=document.getElementById(id); if(el) map.set(el,a); });
+  const sections = [...map.keys()];
+  function onScroll(){
+    let current = sections[0];
+    const y = window.scrollY + 120;
+    for(const s of sections){ if(s.offsetTop <= y) current = s; }
+    links.forEach(a=>a.classList.remove('active'));
+    const active = map.get(current); if(active) active.classList.add('active');
+  }
+  window.addEventListener('scroll', onScroll, {passive:true});
+  onScroll();
+})();
+</script>
+</body>
+</html>
