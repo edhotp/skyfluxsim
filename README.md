@@ -28,5 +28,7 @@ Tidak membutuhkan build step, package manager, atau server khusus.
 ## Deploy
 Proyek ini cocok untuk static hosting, misalnya Azure Blob Static Website.
 
-## Disclaimer
-Aplikasi ini bersifat edukasi/simulasi. Hasil perhitungan adalah estimasi model RF yang disederhanakan dan dapat berbeda dari kondisi terbang nyata.
+## Open Source & Disclaimer
+Proyek ini adalah **Open Source Project**. Anda bebas untuk mempelajari, memodifikasi, dan berkontribusi pada *source code* aplikasi ini.
+
+**Disclaimer:** Aplikasi ini disediakan "seadanya" (*as-is*) tanpa garansi dalam bentuk apa pun. Aplikasi ini murni untuk tujuan edukasi dan simulasi. Hasil perhitungan adalah estimasi model RF yang disederhanakan dan dapat sangat berbeda dari kondisi terbang nyata di lapangan. Pengguna bertanggung jawab penuh atas segala risiko yang timbul saat menerbangkan dan mengatur *gear* FPV di dunia nyata.
